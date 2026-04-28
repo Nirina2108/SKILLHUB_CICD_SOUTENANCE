@@ -1,0 +1,35 @@
+# IDE / Editor
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies & build artifacts (across all subprojects)
+**/node_modules/
+**/vendor/
+**/coverage/
+**/dist/
+**/target/
+**/.phpunit.cache/
+**/.phpunit.result.cache
+
+# Test / build output logs
+**/*-output.txt
+**/*-exit.txt
+**/*-final.txt
+**/test-output.log
+**/testlog-*.txt
+**/maven-*.txt
+**/verify-*.txt
+**/coverage-*.txt
+**/artisan-*.txt
+**/phpunit-*.txt
+**/pecl-*.txt
+**/vitest-*.txt
+
+# Local env (each subproject can override)
+**/.env
+!**/.env.example
