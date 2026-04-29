@@ -21,23 +21,26 @@ import './DetailFormationPage.css';
  * Route : /formation/:id (publique, l'inscription requiert une session apprenant)
  */
 export default function DetailFormationPage() {
+    // useParams récupère les segments dynamiques de l'URL (ici :id depuis /formation/:id).
     const { id }     = useParams();
     const navigate   = useNavigate();
     const { estConnecte, estApprenant } = useAuth();
 
+    // État : formation chargée, ses modules, statut UI, et drapeau inscription.
     const [formation,    setFormation]    = useState(null);
     const [modules,      setModules]      = useState([]);
     const [chargement,   setChargement]   = useState(true);
     const [erreur,       setErreur]       = useState('');
     const [messageOk,    setMessageOk]    = useState('');
     const [modalMode,    setModalMode]    = useState(null);
-    const [inscrit,      setInscrit]      = useState(false);
-    const [loadingInsc,  setLoadingInsc]  = useState(false);
+    const [inscrit,      setInscrit]      = useState(false);     // l'apprenant courant est-il inscrit ?
+    const [loadingInsc,  setLoadingInsc]  = useState(false);     // pendant la requête d'inscription
 
+    // Effect : chargement initial de la page (relance si l'id change).
     useEffect(() => {
         const charger = async () => {
             try {
-                // Chargement de la formation et ses modules en parallèle
+                // Promise.all = appels parallèles pour gagner du temps (formation + modules).
                 const [dataFormation, dataModules] = await Promise.all([
                     formationService.getFormation(id),
                     moduleService.getModules(id),
@@ -46,9 +49,11 @@ export default function DetailFormationPage() {
                 setFormation(dataFormation);
                 setModules(dataModules);
 
-                // Vérification si l'apprenant est déjà inscrit
+                // Si l'utilisateur est apprenant, on regarde si déjà inscrit pour
+                // afficher "Continuer" au lieu de "Suivre".
                 if (estApprenant()) {
                     const mesFormations = await inscriptionService.mesFormations();
+                    // .some() : true s'il y a au moins une inscription matching cette formation.
                     const dejaInscrit   = mesFormations.some(
                         (insc) => insc.formation_id === parseInt(id)
                     );
@@ -63,7 +68,9 @@ export default function DetailFormationPage() {
         charger();
     }, [id]);
 
+    // Inscription depuis cette page (bouton "Suivre la formation").
     const handleInscription = async () => {
+        // Pas connecté -> ouvre la modal d'auth, l'utilisateur s'inscrit puis revient.
         if (!estConnecte()) {
             setModalMode('login');
             return;
@@ -72,7 +79,7 @@ export default function DetailFormationPage() {
         setLoadingInsc(true);
         try {
             await inscriptionService.sInscrire(id);
-            setInscrit(true);
+            setInscrit(true);  // bascule l'UI vers "Continuer"
             setMessageOk('Inscription réussie ! Vous pouvez maintenant suivre cette formation.');
         } catch (error) {
             const msg = error.response?.data?.message || "Erreur lors de l'inscription.";
@@ -82,6 +89,7 @@ export default function DetailFormationPage() {
         }
     };
 
+    // Convertit la valeur niveau en libellé affichable.
     const getNiveauLabel = (niveau) => {
         const labels = {
             debutant:      'Débutant',
@@ -91,6 +99,7 @@ export default function DetailFormationPage() {
         return labels[niveau] || niveau;
     };
 
+    // Convertit la valeur categorie en libellé affichable (ex: 'developpement_web' -> 'Développement web').
     const getCategorieLabel = (categorie) => {
         const labels = {
             developpement_web: 'Développement web',
@@ -103,6 +112,7 @@ export default function DetailFormationPage() {
         return labels[categorie] || categorie;
     };
 
+    // Early return : pendant le chargement initial, on affiche un placeholder.
     if (chargement) {
         return (
             <div className="detail-page">
@@ -113,6 +123,7 @@ export default function DetailFormationPage() {
         );
     }
 
+    // Early return : si erreur ET pas de formation chargée, page d'erreur dédiée.
     if (erreur && !formation) {
         return (
             <div className="detail-page">
@@ -193,12 +204,14 @@ export default function DetailFormationPage() {
                     </div>
                 </div>
 
-                {/* Liste des modules */}
+                {/* Liste des modules de la formation (titres seulement, contenu masqué pour les non-inscrits) */}
                 <div className="detail-modules">
                     <h2 className="detail-modules-titre">
+                        {/* Pluriel conditionnel selon le nombre de modules */}
                         Contenu de la formation ({modules.length} module{modules.length > 1 ? 's' : ''})
                     </h2>
 
+                    {/* Ternaire simple : si aucun module, message ; sinon, liste */}
                     {modules.length === 0 ? (
                         <p className="detail-modules-vide">
                             Aucun module disponible pour le moment.
@@ -207,6 +220,7 @@ export default function DetailFormationPage() {
                         <div className="detail-modules-liste">
                             {modules.map((module, index) => (
                                 <div key={module.id} className="detail-module-item">
+                                    {/* Numéro affiché basé sur l'index (commence à 1) */}
                                     <div className="detail-module-numero">
                                         {index + 1}
                                     </div>
@@ -215,6 +229,7 @@ export default function DetailFormationPage() {
                                             {module.titre}
                                         </h3>
                                         <p className="detail-module-apercu">
+                                            {/* Aperçu : 80 premiers caractères + ellipse si tronqué */}
                                             {module.contenu?.slice(0, 80)}
                                             {module.contenu?.length > 80 ? '...' : ''}
                                         </p>

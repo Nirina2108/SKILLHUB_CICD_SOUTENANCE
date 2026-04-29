@@ -21,26 +21,34 @@ import './CataloguePage.css';
  * Route : /formations (publique)
  */
 export default function CataloguePage() {
+    // Helpers du contexte : estConnecte() pour le wrapper public/privé,
+    // estApprenant() pour décider d'afficher le bouton "S'inscrire".
     const { estConnecte, estApprenant } = useAuth();
     const navigate = useNavigate();
 
+    // États : liste des formations + drapeau chargement + mode modal + notification toast.
     const [formations,  setFormations]  = useState([]);
     const [chargement,  setChargement]  = useState(true);
-    const [modalMode,   setModalMode]   = useState(null);
-    const [notification, setNotification] = useState(null);
+    const [modalMode,   setModalMode]   = useState(null);          // null | 'login' | 'register'
+    const [notification, setNotification] = useState(null);        // { message, type }
 
+    // États des filtres — synchronisés avec les inputs côté UI.
     const [recherche, setRecherche] = useState('');
     const [categorie, setCategorie] = useState('');
     const [niveau,    setNiveau]    = useState('');
 
+    // Affiche un toast pendant 3.5 secondes puis le retire automatiquement.
     const afficherNotification = (message, type = 'succes') => {
         setNotification({ message, type });
         setTimeout(() => setNotification(null), 3500);
     };
 
+    // Charge les formations depuis l'API en appliquant les filtres actuels.
     const chargerFormations = async () => {
         setChargement(true);
         try {
+            // Construit l'objet filtres en n'incluant QUE les champs non vides.
+            // Le backend reconnaît les query params seulement s'ils sont présents.
             const filtres = {};
             if (recherche) filtres.recherche = recherche;
             if (categorie) filtres.categorie = categorie;
@@ -54,14 +62,21 @@ export default function CataloguePage() {
         }
     };
 
+    // Effect 1 : 1er chargement au montage (sans filtres).
     useEffect(() => { chargerFormations(); }, []);
 
+    // Effect 2 : debounced re-fetch dès qu'un filtre change.
+    // On attend 400ms après le dernier changement avant d'appeler l'API
+    // pour éviter de saturer le backend pendant la frappe.
     useEffect(() => {
         const delai = setTimeout(() => { chargerFormations(); }, 400);
+        // Cleanup : si un nouveau changement survient avant 400ms, on annule l'ancien timeout.
         return () => clearTimeout(delai);
     }, [recherche, categorie, niveau]);
 
+    // Inscription à une formation depuis la card.
     const handleInscription = async (formationId) => {
+        // Si pas connecté, on ouvre la modal d'auth au lieu d'appeler l'API.
         if (!estConnecte()) {
             setModalMode('login');
             return;
@@ -71,6 +86,7 @@ export default function CataloguePage() {
             afficherNotification('Inscription reussie ! Retrouvez cette formation dans votre dashboard.', 'succes');
         } catch (error) {
             const msg = error.response?.data?.message || 'Erreur inscription';
+            // Cas spécial : déjà inscrit -> message d'info plus doux.
             if (msg.includes('deja')) {
                 afficherNotification('Vous etes deja inscrit a cette formation.', 'info');
             } else {
@@ -79,6 +95,7 @@ export default function CataloguePage() {
         }
     };
 
+    // Reset les 3 filtres en une fois.
     const reinitialiserFiltres = () => {
         setRecherche('');
         setCategorie('');

@@ -22,22 +22,25 @@ import './ApprendrePage.css';
  * Route : /apprendre/:id (réservée aux apprenants inscrits à cette formation)
  */
 export default function ApprendrePage() {
-    const { id }   = useParams();
+    const { id }   = useParams();          // id de la formation depuis l'URL /apprendre/:id
     const navigate = useNavigate();
     const { utilisateur } = useAuth();
 
+    // États : formation + modules + inscription + progression + UI flags.
     const [formation,    setFormation]    = useState(null);
     const [modules,      setModules]      = useState([]);
-    const [inscription,  setInscription]  = useState(null);
-    const [modulesTermines, setModulesTermines] = useState([]);
+    const [inscription,  setInscription]  = useState(null);     // pour la progression %
+    const [modulesTermines, setModulesTermines] = useState([]); // tableau d'IDs des modules finis
     const [chargement,   setChargement]   = useState(true);
     const [erreur,       setErreur]       = useState('');
     const [messageOk,    setMessageOk]    = useState('');
-    const [moduleActif,  setModuleActif]  = useState(null);
+    const [moduleActif,  setModuleActif]  = useState(null);     // module actuellement affiché
     const [loadingTerminer, setLoadingTerminer] = useState(false);
 
+    // Chargement initial : 4 requêtes en parallèle pour gagner du temps.
     const charger = async () => {
         try {
+            // Promise.all attend que les 4 résolvent puis renvoie un tableau de résultats.
             const [dataFormation, dataModules, mesFormations, termines] = await Promise.all([
                 formationService.getFormation(id),
                 moduleService.getModules(id),
@@ -48,14 +51,17 @@ export default function ApprendrePage() {
             setFormation(dataFormation);
             setModules(dataModules);
 
-            // Pré-remplir les modules déjà terminés (persistés en base)
+            // Pré-remplir les modules déjà terminés (persistés en base, pour cocher les items).
             setModulesTermines(termines.modules_termines ?? []);
 
-            // Trouver l'inscription de l'apprenant pour cette formation
+            // Cherche l'inscription correspondant à cette formation parmi celles de l'apprenant.
+            // parseInt nécessaire car id de l'URL est string, alors que formation_id est int.
             const insc = mesFormations.find(
                 (i) => parseInt(i.formation_id) === parseInt(id)
             );
 
+            // Sécurité : si pas inscrit, on redirige vers le dashboard.
+            // L'apprenant ne peut pas voir le contenu d'une formation à laquelle il n'est pas inscrit.
             if (!insc) {
                 navigate('/dashboard/apprenant');
                 return;
@@ -63,7 +69,7 @@ export default function ApprendrePage() {
 
             setInscription(insc);
 
-            // Premier module ouvert par défaut
+            // Module initial : on ouvre le 1er par défaut pour ne pas afficher un écran vide.
             if (dataModules.length > 0) {
                 setModuleActif(dataModules[0]);
             }
@@ -75,10 +81,12 @@ export default function ApprendrePage() {
         }
     };
 
+    // Effect de chargement, relance si l'id change (navigation entre formations).
     useEffect(() => {
         charger();
     }, [id]);
 
+    // Ouvre le PDF dans un nouvel onglet (lecture inline, pas téléchargement).
     const handleVoirPdf = async () => {
         try {
             await formationService.ouvrirPdf(formation.id);
@@ -89,6 +97,7 @@ export default function ApprendrePage() {
         }
     };
 
+    // Télécharge le PDF sur le poste de l'utilisateur.
     const handleTelechargerPdf = async () => {
         try {
             await formationService.telechargerPdf(formation.id, formation.titre);
@@ -99,14 +108,19 @@ export default function ApprendrePage() {
         }
     };
 
+    // Marque un module comme terminé et met à jour la progression locale.
     const handleTerminer = async (moduleId) => {
+        // Idempotence : si déjà terminé, on ne fait rien (pas d'appel API).
         if (modulesTermines.includes(moduleId)) return;
 
         setLoadingTerminer(true);
         try {
             const data = await moduleService.terminerModule(moduleId);
+            // Mise à jour du tableau des modules terminés avec spread operator (immutabilité React).
             setModulesTermines([...modulesTermines, moduleId]);
+            // Mise à jour de la progression dans l'inscription (object spread pour copier).
             setInscription({ ...inscription, progression: data.progression });
+            // Message de succès avec la nouvelle progression (template literal).
             setMessageOk(`Module terminé. Progression : ${data.progression}%`);
             setTimeout(() => setMessageOk(''), 3000);
         } catch (error) {
@@ -118,6 +132,7 @@ export default function ApprendrePage() {
         }
     };
 
+    // Helper pour les classes CSS et le badge "Terminé".
     const estTermine = (moduleId) => modulesTermines.includes(moduleId);
 
     if (chargement) {
