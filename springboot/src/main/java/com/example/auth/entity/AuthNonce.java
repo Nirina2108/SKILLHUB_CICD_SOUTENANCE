@@ -13,9 +13,19 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 
 /**
- * Entité représentant un nonce d'authentification.
+ * Entité JPA représentant un nonce d'authentification (anti-rejeu).
  *
- * Le nonce sert à empêcher les attaques par rejeu.
+ * Un nonce ("number used once") est une valeur aléatoire émise par le serveur
+ * lors de l'initialisation d'une demande d'authentification. Le client doit
+ * l'inclure dans sa preuve HMAC. Une fois utilisé pour valider une connexion,
+ * le nonce est marqué consommé (consumed=true) et ne peut plus être réutilisé.
+ *
+ * Cette mécanique empêche les attaques par rejeu : même si un attaquant
+ * intercepte une preuve HMAC valide, il ne peut pas la rejouer car le serveur
+ * refusera le nonce déjà consommé ou expiré.
+ *
+ * Contrainte unique (user_id, nonce) : un même nonce ne peut être utilisé
+ * deux fois pour le même utilisateur.
  *
  * @author Poun
  * @version 3.1

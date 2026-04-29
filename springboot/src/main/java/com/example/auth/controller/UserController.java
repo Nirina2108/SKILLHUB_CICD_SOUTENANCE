@@ -14,7 +14,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controller pour la gestion des utilisateurs.
+ * Contrôleur REST pour la consultation des autres utilisateurs.
+ *
+ * Sert principalement à alimenter une éventuelle messagerie / interface
+ * de sélection de contacts : un utilisateur connecté peut récupérer la
+ * liste des autres utilisateurs (sans son propre profil).
+ *
+ * Endpoint protégé par token Bearer : la validité est vérifiée via TokenService
+ * (qui consulte le champ token+token_expires_at de l'entité User en base).
  *
  * @author Nirina
  * @version 1.1

@@ -1,7 +1,14 @@
 package com.example.auth.dto;
 
 /**
- * DTO pour login TP3
+ * Payload reçu sur POST /api/auth/login.
+ *
+ * Contient la preuve HMAC calculée par le client et envoyée au serveur :
+ *  - email     : identifie l'utilisateur dont la preuve doit être vérifiée
+ *  - nonce     : valeur unique reçue du serveur lors de l'init du challenge
+ *  - timestamp : moment du calcul de la preuve (anti-rejeu temporel)
+ *  - hmac      : signature HMAC-SHA-256 de "email:nonce:timestamp" avec le
+ *                password comme clé secrète
  */
 public class LoginRequest {
 

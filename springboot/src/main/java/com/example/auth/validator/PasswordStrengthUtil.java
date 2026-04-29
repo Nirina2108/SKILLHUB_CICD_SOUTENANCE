@@ -1,13 +1,22 @@
 package com.example.auth.validator;
 
 /**
- * Utilitaire simple pour évaluer la robustesse d'un mot de passe.
+ * Utilitaire d'évaluation de la robustesse visuelle d'un mot de passe.
  *
- * Cette classe est utilisée par l'interface JavaFX pour :
- * - évaluer la force du mot de passe
- * - afficher un message
- * - vérifier la politique minimale
- * - vérifier que deux mots de passe correspondent
+ * Conçu pour alimenter une interface utilisateur (originellement JavaFX,
+ * également utilisable côté web via API) qui affiche un indicateur visuel
+ * de force de mot de passe en temps réel pendant la saisie.
+ *
+ * Différence avec PasswordPolicyValidator :
+ *  - PasswordPolicyValidator : valide en BINAIRE (accepté/refusé) pour
+ *    bloquer les inscriptions/changements côté serveur.
+ *  - PasswordStrengthUtil : retourne un SCORE (0-5) et une couleur
+ *    (RED/ORANGE/GREEN) pour donner un feedback progressif à l'utilisateur.
+ *
+ * Score :
+ *  - 0-2 : RED (mot de passe faible)
+ *  - 3-4 : ORANGE (mot de passe moyen)
+ *  - 5   : GREEN (mot de passe fort)
  *
  * @author Poun
  * @version 3.0

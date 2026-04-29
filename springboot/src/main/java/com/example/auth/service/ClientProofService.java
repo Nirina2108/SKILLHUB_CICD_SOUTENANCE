@@ -8,13 +8,19 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Service simulant le comportement du client TP3.
+ * Service de simulation du calcul de preuve d'authentification côté client.
  *
- * Ce service construit :
- * - un nonce
- * - un timestamp
- * - le message canonique
- * - la signature HMAC
+ * En production réelle, ce calcul est effectué dans le navigateur ou l'app
+ * mobile pour ne JAMAIS transmettre le mot de passe en clair sur le réseau.
+ * Ici on l'implémente côté serveur pour faciliter les tests Postman / curl /
+ * démos pendant la soutenance.
+ *
+ * La preuve produite contient :
+ *  - un nonce client (UUID aléatoire pour empêcher le rejeu)
+ *  - un timestamp Unix (anti-rejeu temporel : le serveur peut rejeter une
+ *    preuve trop ancienne, même si elle a été interceptée)
+ *  - le message canonique (email:nonce:timestamp)
+ *  - la signature HMAC de ce message avec le password comme secret
  *
  * @author Poun
  * @version 3.2

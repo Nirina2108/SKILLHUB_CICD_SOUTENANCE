@@ -1,13 +1,14 @@
 package com.example.auth.dto;
 
 /**
- * DTO pour la requête d'inscription.
+ * Payload reçu sur POST /api/auth/register.
  *
- * Il contient :
- * - le nom
- * - l email
- * - le mot de passe
- * - le role (apprenant ou formateur)
+ * Contient les données nécessaires à la création d'un compte utilisateur :
+ *  - name     : nom complet affiché dans l'interface
+ *  - email    : identifiant unique (sert aussi à recevoir le mail de vérification)
+ *  - password : mot de passe en clair (chiffré ensuite par PasswordCryptoService
+ *               avant insertion en base, JAMAIS stocké tel quel)
+ *  - role     : "apprenant" ou "formateur" (validé par AuthService.register)
  *
  * @author Poun
  * @version 1.1

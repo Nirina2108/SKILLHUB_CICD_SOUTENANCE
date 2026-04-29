@@ -1,14 +1,19 @@
 package com.example.auth.validator;
 
 /**
- * Validateur simple de politique de mot de passe pour TP2.
+ * Validateur de politique de robustesse des mots de passe.
  *
- * Règles imposées :
- * - au moins 12 caractères
- * - au moins une majuscule
- * - au moins une minuscule
- * - au moins un chiffre
- * - au moins un caractère spécial
+ * Appliqué côté serveur lors de l'inscription et du changement de mot de
+ * passe pour refuser les mots de passe trop faibles. Une validation côté
+ * client (HTML5 ou JS) peut être faite en complément pour de meilleurs
+ * messages d'erreur, mais ce validateur est la SOURCE DE VÉRITÉ.
+ *
+ * Règles cumulatives (toutes obligatoires) :
+ *  - longueur >= 12 caractères
+ *  - au moins une majuscule (A-Z)
+ *  - au moins une minuscule (a-z)
+ *  - au moins un chiffre (0-9)
+ *  - au moins un caractère spécial parmi !@#$%^&*()
  *
  * @author Poun
  * @version 2.3

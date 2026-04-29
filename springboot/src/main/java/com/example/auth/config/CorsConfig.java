@@ -12,7 +12,20 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
 /**
- * Configuration CORS pour autoriser les requetes du frontend React.
+ * Configuration CORS du service d'authentification Spring Boot.
+ *
+ * Cette classe est un Filter Servlet plutôt qu'une configuration WebMvc
+ * (CorsRegistry) parce qu'elle doit s'exécuter AVANT la résolution de route :
+ * @Order(HIGHEST_PRECEDENCE) garantit qu'elle traite les requêtes OPTIONS
+ * de préflight avant que Spring ne tente de matcher une route inexistante.
+ *
+ * Origines autorisées : localhost:3000 (CRA dev) et localhost:5173 (Vite dev),
+ * en HTTP comme en 127.0.0.1. Toute autre origine n'aura pas le header
+ * Access-Control-Allow-Origin et le navigateur bloquera la réponse.
+ *
+ * supportsCredentials=true permet aux requêtes avec cookies/Authorization
+ * de réussir ; impose donc qu'Allow-Origin renvoie une origine SPÉCIFIQUE
+ * (pas le wildcard "*").
  *
  * @author Nirina
  * @version 1.1
@@ -22,7 +35,9 @@ import org.springframework.core.annotation.Order;
 public class CorsConfig implements Filter {
 
     /**
-     * Filtre CORS applique a toutes les requetes.
+     * Implémentation du filtre. Ajoute les headers CORS, court-circuite OPTIONS
+     * en répondant directement 200 (préflight), et passe la requête au pipeline
+     * suivant pour les autres méthodes.
      */
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
