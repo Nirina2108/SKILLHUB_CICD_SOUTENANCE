@@ -9,6 +9,17 @@ import Bouton from '../components/Bouton';
 import ModalAuth from '../components/ModalAuth';
 import './CataloguePage.css';
 
+/*
+ * Page catalogue : liste de toutes les formations publiques avec filtres.
+ *
+ * Filtres disponibles : recherche texte, catégorie, niveau (état local
+ * envoyé au backend via les query params de getFormations).
+ *
+ * Si l'utilisateur est connecté en tant qu'apprenant, le bouton "S'inscrire"
+ * s'affiche sur chaque card. Sinon, un clic redirige vers la modal d'auth.
+ *
+ * Route : /formations (publique)
+ */
 export default function CataloguePage() {
     const { estConnecte, estApprenant } = useAuth();
     const navigate = useNavigate();

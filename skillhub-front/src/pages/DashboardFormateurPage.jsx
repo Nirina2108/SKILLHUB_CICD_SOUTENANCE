@@ -10,6 +10,21 @@ import ModalFormation from '../components/ModalFormation';
 import ModalModules from '../components/ModalModules';
 import './DashboardFormateurPage.css';
 
+/*
+ * Page dashboard du formateur.
+ *
+ * Affiche les formations créées par le formateur avec leur statistiques
+ * (vues, apprenants inscrits), un indicateur de présence du PDF, et permet
+ * de :
+ *  - Créer une nouvelle formation (avec PDF optionnel) via ModalFormation
+ *  - Modifier une formation existante (titre, description, PDF)
+ *  - Gérer les modules (leçons) via ModalModules
+ *  - Télécharger le PDF du cours
+ *  - Supprimer une formation
+ *  - Mettre à jour sa photo de profil
+ *
+ * Route : /dashboard/formateur (protégée par RouteFormateur dans App.jsx)
+ */
 export default function DashboardFormateurPage() {
     const { utilisateur, setUtilisateur } = useAuth();
     const navigate = useNavigate();

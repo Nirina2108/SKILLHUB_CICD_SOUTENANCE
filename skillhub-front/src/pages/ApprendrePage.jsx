@@ -9,6 +9,18 @@ import Footer from '../components/Footer';
 import Bouton from '../components/Bouton';
 import './ApprendrePage.css';
 
+/*
+ * Page d'apprentissage : où l'apprenant inscrit consomme la formation.
+ *
+ * Layout : sidebar gauche avec la liste des modules (numéro et titre, coche
+ * si terminé), zone centrale avec le contenu du module sélectionné, barre
+ * de progression en haut. Boutons "Lire le PDF" et "Télécharger" si la
+ * formation a un PDF de cours uploadé par le formateur.
+ *
+ * Sécurité : si l'apprenant n'est pas inscrit, on redirige vers son dashboard.
+ *
+ * Route : /apprendre/:id (réservée aux apprenants inscrits à cette formation)
+ */
 export default function ApprendrePage() {
     const { id }   = useParams();
     const navigate = useNavigate();

@@ -7,6 +7,15 @@ import Footer from '../components/Footer';
 import Bouton from '../components/Bouton';
 import './ProfilPage.css';
 
+/*
+ * Page profil utilisateur (commune apprenant et formateur).
+ *
+ * Permet à l'utilisateur connecté de :
+ *  - Voir ses informations (nom, email, rôle).
+ *  - Changer sa photo de profil (upload jpg/png/gif, max 2 MB côté backend).
+ *
+ * Route : /profil (accessible à tout utilisateur connecté, peu importe le rôle)
+ */
 export default function ProfilPage() {
     const { utilisateur, setUtilisateur } = useAuth();
     const navigate = useNavigate();
