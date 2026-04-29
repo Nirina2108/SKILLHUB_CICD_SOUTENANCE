@@ -85,6 +85,59 @@ export default function CataloguePage() {
         setNiveau('');
     };
 
+    // Helper extrayant la branche conditionnelle (chargement / vide / liste).
+    // Évite le ternaire imbriqué que SonarLint flagge (javascript:S3358).
+    const renderFormationsListe = () => {
+        if (chargement) {
+            return <p className="catalogue-chargement">Chargement...</p>;
+        }
+        if (formations.length === 0) {
+            return <p className="catalogue-vide">Aucune formation trouvee.</p>;
+        }
+        return (
+            <>
+                <p className="catalogue-compteur">
+                    {formations.length} formation{formations.length > 1 ? 's' : ''} trouvee{formations.length > 1 ? 's' : ''}
+                </p>
+                <div className="catalogue-grille">
+                    {formations.map((formation) => (
+                        <div key={formation.id} className="catalogue-card">
+                            <div className="catalogue-card-badges">
+                                <span className="catalogue-badge-niveau">{formation.niveau}</span>
+                                <span className="catalogue-badge-categorie">{formation.categorie?.replace('_', ' ')}</span>
+                            </div>
+                            <h3 className="catalogue-card-titre">{formation.titre}</h3>
+                            <p className="catalogue-card-description">
+                                {formation.description?.slice(0, 100)}
+                                {formation.description?.length > 100 ? '...' : ''}
+                            </p>
+                            <div className="catalogue-card-meta">
+                                <span>Par {formation.formateur?.nom}</span>
+                                <span>{formation.inscriptions_count} apprenant{formation.inscriptions_count > 1 ? 's' : ''}</span>
+                                <span>{formation.nombre_de_vues} vue{formation.nombre_de_vues > 1 ? 's' : ''}</span>
+                            </div>
+                            <div className="catalogue-card-actions">
+                                <Bouton variante="fantome" taille="petit" onClick={() => navigate(`/formation/${formation.id}`)}>
+                                    Voir detail
+                                </Bouton>
+                                {estApprenant() && (
+                                    <Bouton variante="principal" taille="petit" onClick={() => handleInscription(formation.id)}>
+                                        S'inscrire
+                                    </Bouton>
+                                )}
+                                {!estConnecte() && (
+                                    <Bouton variante="principal" taille="petit" onClick={() => setModalMode('login')}>
+                                        Suivre la formation
+                                    </Bouton>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </>
+        );
+    };
+
     return (
         <div className="catalogue-page">
             <Navbar />
@@ -133,52 +186,7 @@ export default function CataloguePage() {
                     )}
                 </div>
 
-                {chargement ? (
-                    <p className="catalogue-chargement">Chargement...</p>
-                ) : formations.length === 0 ? (
-                    <p className="catalogue-vide">Aucune formation trouvee.</p>
-                ) : (
-                    <>
-                        <p className="catalogue-compteur">
-                            {formations.length} formation{formations.length > 1 ? 's' : ''} trouvee{formations.length > 1 ? 's' : ''}
-                        </p>
-                        <div className="catalogue-grille">
-                            {formations.map((formation) => (
-                                <div key={formation.id} className="catalogue-card">
-                                    <div className="catalogue-card-badges">
-                                        <span className="catalogue-badge-niveau">{formation.niveau}</span>
-                                        <span className="catalogue-badge-categorie">{formation.categorie?.replace('_', ' ')}</span>
-                                    </div>
-                                    <h3 className="catalogue-card-titre">{formation.titre}</h3>
-                                    <p className="catalogue-card-description">
-                                        {formation.description?.slice(0, 100)}
-                                        {formation.description?.length > 100 ? '...' : ''}
-                                    </p>
-                                    <div className="catalogue-card-meta">
-                                        <span>Par {formation.formateur?.nom}</span>
-                                        <span>{formation.inscriptions_count} apprenant{formation.inscriptions_count > 1 ? 's' : ''}</span>
-                                        <span>{formation.nombre_de_vues} vue{formation.nombre_de_vues > 1 ? 's' : ''}</span>
-                                    </div>
-                                    <div className="catalogue-card-actions">
-                                        <Bouton variante="fantome" taille="petit" onClick={() => navigate(`/formation/${formation.id}`)}>
-                                            Voir detail
-                                        </Bouton>
-                                        {estApprenant() && (
-                                            <Bouton variante="principal" taille="petit" onClick={() => handleInscription(formation.id)}>
-                                                S'inscrire
-                                            </Bouton>
-                                        )}
-                                        {!estConnecte() && (
-                                            <Bouton variante="principal" taille="petit" onClick={() => setModalMode('login')}>
-                                                Suivre la formation
-                                            </Bouton>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </>
-                )}
+                {renderFormationsListe()}
             </div>
 
             <Footer />

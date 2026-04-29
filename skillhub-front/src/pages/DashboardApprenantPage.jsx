@@ -105,6 +105,101 @@ export default function DashboardApprenantPage() {
         ? Math.round(inscriptions.reduce((s, i) => s + i.progression, 0) / inscriptions.length)
         : 0;
 
+    // Couleur du bandeau selon la progression — extraite pour éviter le ternaire imbriqué.
+    const couleurBandeau = (progression) => {
+        if (progression === 100) return '#4ade80';
+        if (progression > 0) return '#f59e0b';
+        return '#475569';
+    };
+
+    // Helper extrayant la branche conditionnelle (chargement / vide / liste des cards).
+    // Évite le ternaire imbriqué que SonarLint flagge (javascript:S3358).
+    const renderInscriptionsListe = () => {
+        if (chargement) {
+            return (
+                <div className="da-chargement">
+                    <div className="da-spinner" />
+                    <p>Chargement de vos formations...</p>
+                </div>
+            );
+        }
+        if (inscriptionsFiltrees.length === 0) {
+            return (
+                <div className="da-vide">
+                    <p>Aucune formation dans cette categorie.</p>
+                    <Bouton variante="principal" onClick={() => navigate('/formations')}>
+                        Decouvrir les formations
+                    </Bouton>
+                </div>
+            );
+        }
+        return (
+            <div className="da-grille">
+                {inscriptionsFiltrees.map((inscription) => (
+                    <div key={inscription.id} className="da-card">
+                        <div
+                            className="da-card-bandeau"
+                            style={{ background: couleurBandeau(inscription.progression) }}
+                        />
+
+                        <div className="da-card-body">
+                            <div className="da-card-badges">
+                                <span className="da-badge-niveau">
+                                    {getNiveauLabel(inscription.formation?.niveau)}
+                                </span>
+
+                                {inscription.progression === 100 && (
+                                    <span className="da-badge-termine">Termine</span>
+                                )}
+                            </div>
+
+                            <h3 className="da-card-titre">
+                                {inscription.formation?.titre}
+                            </h3>
+
+                            <p className="da-card-description">
+                                {inscription.formation?.description?.slice(0, 90)}
+                                {inscription.formation?.description?.length > 90 ? '...' : ''}
+                            </p>
+
+                            <div className="da-progression-bloc">
+                                <div className="da-progression-header">
+                                    <span className="da-progression-label">Progression</span>
+                                    <span className="da-progression-valeur">{inscription.progression}%</span>
+                                </div>
+
+                                <div className="da-progression-barre">
+                                    <div
+                                        className="da-progression-remplissage"
+                                        style={{ width: `${inscription.progression}%` }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="da-card-actions">
+                            <Bouton
+                                variante="principal"
+                                taille="petit"
+                                onClick={() => navigate(`/apprendre/${inscription.formation_id}`)}
+                            >
+                                {inscription.progression > 0 ? 'Continuer' : 'Commencer'}
+                            </Bouton>
+
+                            <Bouton
+                                variante="danger"
+                                taille="petit"
+                                onClick={() => handleDesinscrire(inscription.formation_id)}
+                            >
+                                Ne plus suivre
+                            </Bouton>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <div className="da-page">
             <Navbar />
@@ -246,89 +341,7 @@ export default function DashboardApprenantPage() {
                     </div>
                 </div>
 
-                {chargement ? (
-                    <div className="da-chargement">
-                        <div className="da-spinner" />
-                        <p>Chargement de vos formations...</p>
-                    </div>
-                ) : inscriptionsFiltrees.length === 0 ? (
-                    <div className="da-vide">
-                        <p>Aucune formation dans cette categorie.</p>
-                        <Bouton variante="principal" onClick={() => navigate('/formations')}>
-                            Decouvrir les formations
-                        </Bouton>
-                    </div>
-                ) : (
-                    <div className="da-grille">
-                        {inscriptionsFiltrees.map((inscription) => (
-                            <div key={inscription.id} className="da-card">
-                                <div
-                                    className="da-card-bandeau"
-                                    style={{
-                                        background: inscription.progression === 100
-                                            ? '#4ade80'
-                                            : inscription.progression > 0
-                                                ? '#f59e0b'
-                                                : '#475569'
-                                    }}
-                                />
-
-                                <div className="da-card-body">
-                                    <div className="da-card-badges">
-                                        <span className="da-badge-niveau">
-                                            {getNiveauLabel(inscription.formation?.niveau)}
-                                        </span>
-
-                                        {inscription.progression === 100 && (
-                                            <span className="da-badge-termine">Termine</span>
-                                        )}
-                                    </div>
-
-                                    <h3 className="da-card-titre">
-                                        {inscription.formation?.titre}
-                                    </h3>
-
-                                    <p className="da-card-description">
-                                        {inscription.formation?.description?.slice(0, 90)}
-                                        {inscription.formation?.description?.length > 90 ? '...' : ''}
-                                    </p>
-
-                                    <div className="da-progression-bloc">
-                                        <div className="da-progression-header">
-                                            <span className="da-progression-label">Progression</span>
-                                            <span className="da-progression-valeur">{inscription.progression}%</span>
-                                        </div>
-
-                                        <div className="da-progression-barre">
-                                            <div
-                                                className="da-progression-remplissage"
-                                                style={{ width: `${inscription.progression}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="da-card-actions">
-                                    <Bouton
-                                        variante="principal"
-                                        taille="petit"
-                                        onClick={() => navigate(`/apprendre/${inscription.formation_id}`)}
-                                    >
-                                        {inscription.progression > 0 ? 'Continuer' : 'Commencer'}
-                                    </Bouton>
-
-                                    <Bouton
-                                        variante="danger"
-                                        taille="petit"
-                                        onClick={() => handleDesinscrire(inscription.formation_id)}
-                                    >
-                                        Ne plus suivre
-                                    </Bouton>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                {renderInscriptionsListe()}
             </div>
 
             <Footer />
