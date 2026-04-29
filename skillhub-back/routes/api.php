@@ -1,5 +1,18 @@
 <?php
 
+/*
+ * Définition des routes de l'API REST SkillHub.
+ *
+ * Convention de nommage :
+ *  - Les chemins fréquents sont déclarés en constantes pour éviter les doublons
+ *    et faciliter un éventuel renommage (un seul endroit à modifier).
+ *
+ * Organisation :
+ *  - Routes publiques (test, register, login, listes lecture) hors groupe middleware.
+ *  - Routes protégées dans Route::middleware('auth:api')->group(...) : exigent un JWT valide.
+ *  - Route OPTIONS catch-all en fin pour le préflight CORS, complétée par CorsMiddleware.
+ */
+
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FormationController;
 use App\Http\Controllers\InscriptionController;
@@ -7,6 +20,8 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ModuleController;
 use Illuminate\Support\Facades\Route;
 
+// Constantes de chemins. Le if (! defined(...)) évite les doubles définitions
+// (utile en environnement de tests qui réinclut le fichier plusieurs fois).
 if (! defined('ROUTE_FORMATION_BY_ID')) {
     define('ROUTE_FORMATION_BY_ID', '/formations/{id}');
 }
@@ -63,40 +78,43 @@ if (! defined('ROUTE_APPRENANT_FORMATIONS')) {
     define('ROUTE_APPRENANT_FORMATIONS', '/apprenant/formations');
 }
 
-// ─── Test API ─────────────────────────────────────────────────
+// Endpoint de test : permet de vérifier rapidement que l'API répond et est joignable.
 Route::get('/test', function () {
     return response()->json(['message' => 'API SkillHub OK']);
 });
 
-// ─── Authentification publique ────────────────────────────────
+// Authentification publique (pas de token requis pour s'inscrire ou se connecter).
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// ─── Authentification protégée ────────────────────────────────
+// Toutes les routes nécessitant un JWT valide sont regroupées ici via le guard auth:api.
 Route::middleware('auth:api')->group(function () {
+    // Profil utilisateur, déconnexion, upload photo profil.
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/profil/photo', [AuthController::class, 'uploadPhoto']);
 
-    // ─── Formations protégées ────────────────────────────────
+    // CRUD formations réservé au formateur, plus la liste de "mes formations" et
+    // le téléchargement du PDF (accessible aussi aux apprenants inscrits).
     Route::post(ROUTE_FORMATIONS, [FormationController::class, 'store']);
     Route::put(ROUTE_FORMATION_BY_ID, [FormationController::class, 'update']);
     Route::delete(ROUTE_FORMATION_BY_ID, [FormationController::class, 'destroy']);
     Route::get(ROUTE_FORMATEUR_MES_FORMATIONS, [FormationController::class, 'mesFormations']);
+    Route::get('/formations/{id}/pdf', [FormationController::class, 'downloadPdf']);
 
-    // ─── Modules protégés ────────────────────────────────────
+    // CRUD modules réservé au formateur propriétaire, plus le marquage "terminé" par l'apprenant.
     Route::post(ROUTE_FORMATION_MODULES, [ModuleController::class, 'store']);
     Route::put(ROUTE_MODULE_BY_ID, [ModuleController::class, 'update']);
     Route::delete(ROUTE_MODULE_BY_ID, [ModuleController::class, 'destroy']);
     Route::post(ROUTE_MODULE_TERMINER, [ModuleController::class, 'terminer']);
     Route::get(ROUTE_FORMATION_MODULES_TERMINES, [ModuleController::class, 'mesModulesTermines']);
 
-    // ─── Inscriptions protégées ──────────────────────────────
+    // Inscriptions des apprenants aux formations.
     Route::post(ROUTE_FORMATION_INSCRIPTION, [InscriptionController::class, 'store']);
     Route::delete(ROUTE_FORMATION_INSCRIPTION, [InscriptionController::class, 'destroy']);
     Route::get(ROUTE_APPRENANT_FORMATIONS, [InscriptionController::class, 'mesFormations']);
 
-    // ─── Messagerie protégée ─────────────────────────────────
+    // Messagerie 1:1 entre apprenants et formateurs.
     Route::get(ROUTE_MESSAGES_NON_LUS, [MessageController::class, 'nonLus']);
     Route::get(ROUTE_MESSAGES_CONVERSATIONS, [MessageController::class, 'conversations']);
     Route::get(ROUTE_MESSAGES_CONVERSATION, [MessageController::class, 'messagerie']);
@@ -104,14 +122,13 @@ Route::middleware('auth:api')->group(function () {
     Route::get(ROUTE_MESSAGES_INTERLOCUTEURS, [MessageController::class, 'interlocuteurs']);
 });
 
-// ─── Formations publiques ─────────────────────────────────────
+// Lecture publique des formations et modules (pas de token requis pour explorer le catalogue).
 Route::get(ROUTE_FORMATIONS, [FormationController::class, 'index']);
 Route::get(ROUTE_FORMATION_BY_ID, [FormationController::class, 'show']);
-
-// ─── Modules publics ──────────────────────────────────────────
 Route::get(ROUTE_FORMATION_MODULES, [ModuleController::class, 'index']);
 
-// ─── Gestion des requêtes preflight CORS ──────────────────────
+// Catch-all OPTIONS pour les requêtes préflight CORS qui n'auraient pas été interceptées
+// par CorsMiddleware (sécurité supplémentaire). Les en-têtes CORS sont ajoutés par le middleware.
 Route::options('/{any}', function () {
     return response('', 200);
 })->where('any', '.*');
