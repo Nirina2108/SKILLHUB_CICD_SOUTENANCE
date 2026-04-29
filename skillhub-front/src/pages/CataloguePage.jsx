@@ -32,6 +32,10 @@ export default function CataloguePage() {
     const [modalMode,   setModalMode]   = useState(null);          // null | 'login' | 'register'
     const [notification, setNotification] = useState(null);        // { message, type }
 
+    // Set des IDs des formations auxquelles l'apprenant connecté est déjà inscrit.
+    // Set au lieu d'array pour avoir un .has() en O(1) au lieu d'O(n).
+    const [inscritsIds, setInscritsIds] = useState(new Set());
+
     // États des filtres — synchronisés avec les inputs côté UI.
     const [recherche, setRecherche] = useState('');
     const [categorie, setCategorie] = useState('');
@@ -62,8 +66,24 @@ export default function CataloguePage() {
         }
     };
 
-    // Effect 1 : 1er chargement au montage (sans filtres).
-    useEffect(() => { chargerFormations(); }, []);
+    // Charge les inscriptions de l'apprenant pour savoir quelles formations afficher comme "Inscrit".
+    const chargerInscriptions = async () => {
+        if (!estApprenant()) return;
+        try {
+            const data = await inscriptionService.mesFormations();
+            // On crée un Set d'IDs pour des lookups rapides côté rendu.
+            setInscritsIds(new Set(data.map((insc) => insc.formation_id)));
+        } catch (error) {
+            // Échec silencieux : on garde le Set vide, l'apprenant verra "S'inscrire".
+            console.error('Erreur chargement inscriptions :', error);
+        }
+    };
+
+    // Effect 1 : 1er chargement au montage (sans filtres) + inscriptions de l'apprenant.
+    useEffect(() => {
+        chargerFormations();
+        chargerInscriptions();
+    }, []);
 
     // Effect 2 : debounced re-fetch dès qu'un filtre change.
     // On attend 400ms après le dernier changement avant d'appeler l'API
@@ -84,11 +104,16 @@ export default function CataloguePage() {
         try {
             await inscriptionService.sInscrire(formationId);
             afficherNotification('Inscription reussie ! Retrouvez cette formation dans votre dashboard.', 'succes');
+            // Mise à jour optimiste : on ajoute immédiatement l'id au Set local
+            // pour que le bouton bascule en "Inscrit" sans attendre un refetch.
+            // Le Set est immutable côté React : on en crée un nouveau via spread.
+            setInscritsIds((prev) => new Set([...prev, formationId]));
         } catch (error) {
             const msg = error.response?.data?.message || 'Erreur inscription';
-            // Cas spécial : déjà inscrit -> message d'info plus doux.
+            // Cas spécial : déjà inscrit -> message d'info + on synchronise le Set local.
             if (msg.includes('deja')) {
                 afficherNotification('Vous etes deja inscrit a cette formation.', 'info');
+                setInscritsIds((prev) => new Set([...prev, formationId]));
             } else {
                 afficherNotification(msg, 'erreur');
             }
@@ -137,7 +162,17 @@ export default function CataloguePage() {
                                 <Bouton variante="fantome" taille="petit" onClick={() => navigate(`/formation/${formation.id}`)}>
                                     Voir detail
                                 </Bouton>
-                                {estApprenant() && (
+                                {/* Apprenant connecté : bouton "Inscrit ✓ Continuer" si déjà inscrit, sinon "S'inscrire" */}
+                                {estApprenant() && inscritsIds.has(formation.id) && (
+                                    <Bouton
+                                        variante="secondaire"
+                                        taille="petit"
+                                        onClick={() => navigate(`/apprendre/${formation.id}`)}
+                                    >
+                                        ✓ Inscrit — Continuer
+                                    </Bouton>
+                                )}
+                                {estApprenant() && !inscritsIds.has(formation.id) && (
                                     <Bouton variante="principal" taille="petit" onClick={() => handleInscription(formation.id)}>
                                         S'inscrire
                                     </Bouton>

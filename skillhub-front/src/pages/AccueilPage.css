@@ -1,21 +1,75 @@
 /* Police importee */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ===== SCROLL REVEAL ANIMATIONS =====
+   Chaque section commence invisible et translatée vers le bas, puis apparaît
+   en fondu/slide quand elle entre dans le viewport (Intersection Observer JS). */
+.scroll-animer {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.scroll-animer.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Respect du reduced-motion : les utilisateurs sensibles aux animations
+   voient les sections sans transition (accessibilité). */
+@media (prefers-reduced-motion: reduce) {
+    .scroll-animer {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+
+/* Smooth scroll global pour les ancres */
+html {
+    scroll-behavior: smooth;
+}
+
 /* Page entiere en dark */
 .accueil-page {
     background-color: #0f1623;
     color: #f0f4ff;
     min-height: 100vh;
+    overflow-x: hidden;  /* sécurité contre les débordements horizontaux dûs aux animations */
 }
 
-/* Titre or pour les sections */
+/* Titre or pour les sections — gradient animé moderne */
 .titre-section {
     font-family: 'Outfit', sans-serif;
     font-size: 3rem;
     font-weight: 900;
     text-align: center;
-    color: #f0a500;
     margin-bottom: 0.75rem;
     letter-spacing: -1.5px;
+    /* Gradient animé doré -> orange -> doré */
+    background: linear-gradient(90deg, #f0a500, #ffd966, #f0a500, #ffb84d, #f0a500);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: shineTitre 4s linear infinite;
+    position: relative;
+}
+
+/* Petit trait doré sous le titre — rythme visuel */
+.titre-section::after {
+    content: '';
+    display: block;
+    width: 64px;
+    height: 4px;
+    margin: 0.85rem auto 0;
+    background: linear-gradient(90deg, #f0a500, #ffd966);
+    border-radius: 2px;
+}
+
+@keyframes shineTitre {
+    to { background-position: 200% center; }
 }
 
 .sous-titre-section {
@@ -29,23 +83,44 @@
     line-height: 1.6;
 }
 
-/* Bouton principal bleu */
+/* Bouton principal bleu — gradient + effet glow au hover */
 .btn-principal {
-    background-color: #4f8ef7;
+    background: linear-gradient(135deg, #4f8ef7 0%, #6366f1 100%);
     border: none;
     color: #ffffff;
-    padding: 0.8rem 2rem;
+    padding: 0.85rem 2.2rem;
     border-radius: 50px;
     font-size: 0.95rem;
     font-weight: 600;
     font-family: 'DM Sans', sans-serif;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+    /* isolation: isolate crée un nouveau stacking context.
+       Avec ça, z-index: -1 sur ::before le place derrière le texte
+       sans descendre derrière le parent. */
+    isolation: isolate;
+    box-shadow: 0 6px 20px rgba(79, 142, 247, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.btn-principal::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #6366f1 0%, #4f8ef7 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;  /* derrière le texte du bouton */
 }
 
 .btn-principal:hover {
-    background-color: #3b6fd4;
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(79, 142, 247, 0.55);
+}
+
+.btn-principal:hover::before {
+    opacity: 1;
 }
 
 /* Bouton secondaire transparent */
@@ -78,6 +153,36 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 5rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Halo lumineux animé en fond du hero — donne du dynamisme */
+.accueil-hero::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(79, 142, 247, 0.18) 0%, transparent 70%);
+    top: -200px;
+    left: -150px;
+    pointer-events: none;
+    animation: floatHalo 12s ease-in-out infinite;
+}
+.accueil-hero::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.15) 0%, transparent 70%);
+    bottom: -180px;
+    right: -120px;
+    pointer-events: none;
+    animation: floatHalo 14s ease-in-out infinite reverse;
+}
+@keyframes floatHalo {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(40px, 30px); }
 }
 
 .accueil-hero-texte {
@@ -95,15 +200,46 @@
     line-height: 1.2;
     letter-spacing: -2px;
     color: #f0f4ff;
+    /* Animation d'apparition au load */
+    animation: slideUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.mot-bleu   { color: #4f8ef7; }
-.mot-violet { color: #a78bfa; }
+/* Mots colorés du titre avec gradient animé */
+.mot-bleu {
+    background: linear-gradient(90deg, #4f8ef7, #60a5fa, #4f8ef7);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: shineTitre 5s linear infinite;
+}
+.mot-violet {
+    background: linear-gradient(90deg, #a78bfa, #c4b5fd, #a78bfa);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: shineTitre 5s linear infinite;
+    animation-delay: 0.5s;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
 .accueil-hero-desc {
     font-size: 1rem;
     color: #7a8aaa;
     line-height: 1.75;
+    /* Apparition légèrement décalée par rapport au titre */
+    animation: slideUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.accueil-hero-actions {
+    animation: slideUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
 }
 
 .accueil-hero-actions {
@@ -124,6 +260,17 @@
     border-radius: 20px;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.07);
+    /* Légère oscillation flottante pour donner vie à l'image */
+    animation: floatImage 6s ease-in-out infinite, slideUp 1s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+.accueil-hero-image img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 30px 80px rgba(79, 142, 247, 0.35);
+}
+@keyframes floatImage {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
 }
 
 /* ===================== FONCTIONNEMENT ===================== */
@@ -157,8 +304,15 @@
 }
 
 .accueil-card-glass:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 24px 56px rgba(79, 142, 247, 0.25);
+    border-color: rgba(79, 142, 247, 0.4);
+}
+
+.accueil-card-glass:hover .accueil-card-chip {
+    background-color: #4f8ef7;
+    color: #ffffff;
+    transform: translateX(4px);
 }
 
 /* Overlay sombre — pas trop opaque pour voir la photo */
@@ -330,19 +484,41 @@
 }
 
 .accueil-formation-card {
-    background-color: #1a2236;
+    background: linear-gradient(135deg, #1a2236 0%, #1f2940 100%);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 1.75rem;
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
-    transition: transform 0.25s, border-color 0.25s;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+}
+
+/* Effet de brillance qui glisse en diagonale au hover */
+.accueil-formation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79, 142, 247, 0.08), transparent);
+    transition: left 0.6s ease;
+    pointer-events: none;
 }
 
 .accueil-formation-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(79, 142, 247, 0.35);
+    transform: translateY(-8px);
+    border-color: rgba(79, 142, 247, 0.5);
+    box-shadow: 0 18px 48px rgba(79, 142, 247, 0.18);
+}
+
+.accueil-formation-card:hover::before {
+    left: 100%;
 }
 
 .accueil-badge-niveau {
@@ -507,19 +683,36 @@
 }
 
 .accueil-temoignage-card {
-    background-color: #1a2236;
+    background: linear-gradient(135deg, #1a2236 0%, #20293f 100%);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 1.75rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    transition: transform 0.25s, border-color 0.25s;
+    position: relative;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+}
+
+/* Guillemet décoratif en filigrane sur les témoignages */
+.accueil-temoignage-card::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    font-size: 6rem;
+    font-family: 'Outfit', serif;
+    color: rgba(240, 165, 0, 0.12);
+    line-height: 1;
+    pointer-events: none;
 }
 
 .accueil-temoignage-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(79, 142, 247, 0.35);
+    transform: translateY(-6px);
+    border-color: rgba(240, 165, 0, 0.4);
+    box-shadow: 0 18px 48px rgba(240, 165, 0, 0.15);
 }
 
 .accueil-temoignage-header {
@@ -571,18 +764,47 @@
     letter-spacing: 3px;
 }
 
-/* ===================== RESPONSIVE ===================== */
+/* ===================== RESPONSIVE =====================
+   Breakpoints utilisés :
+   - 1280px : ajustements grands écrans
+   - 1024px : tablettes paysage
+   - 900px  : tablettes portrait
+   - 768px  : grandes mobiles / petites tablettes
+   - 600px  : mobiles
+   - 480px  : petits mobiles
+*/
+
+/* Grands écrans */
+@media (max-width: 1280px) {
+    .accueil-hero {
+        max-width: 1100px;
+        padding: 4.5rem 2rem 3.5rem;
+    }
+    .accueil-hero-titre {
+        font-size: 3.2rem;
+    }
+}
+
+/* Tablettes paysage */
 @media (max-width: 1024px) {
     .accueil-cards-grille {
         grid-template-columns: repeat(2, 1fr);
     }
+    .titre-section {
+        font-size: 2.4rem;
+    }
+    .accueil-hero-titre {
+        font-size: 2.8rem;
+    }
 }
 
+/* Tablettes portrait : passage en colonne pour le hero */
 @media (max-width: 900px) {
     .accueil-hero {
         flex-direction: column;
         padding: 3rem 1.5rem;
         text-align: center;
+        gap: 2rem;
     }
 
     .accueil-hero-texte {
@@ -591,7 +813,7 @@
     }
 
     .accueil-hero-titre {
-        font-size: 2.2rem;
+        font-size: 2.4rem;
     }
 
     .titre-section {
@@ -610,11 +832,52 @@
     .accueil-cards-grille {
         grid-template-columns: 1fr 1fr;
     }
+
+    .accueil-fonctionnement,
+    .accueil-valeurs,
+    .accueil-formations,
+    .accueil-partenaires,
+    .accueil-temoignages {
+        padding: 4rem 1.5rem;
+    }
 }
 
+/* Mobiles (large) */
+@media (max-width: 768px) {
+    .accueil-hero {
+        padding: 2.5rem 1.25rem;
+    }
+    .accueil-hero-titre {
+        font-size: 2.1rem;
+        letter-spacing: -1px;
+    }
+    .accueil-hero-image img {
+        height: 300px;
+    }
+    .titre-section {
+        font-size: 1.9rem;
+        letter-spacing: -1px;
+    }
+    .titre-section::after {
+        width: 48px;
+        height: 3px;
+    }
+    .accueil-card-glass {
+        height: 240px;
+    }
+    .accueil-fonctionnement,
+    .accueil-valeurs,
+    .accueil-formations,
+    .accueil-temoignages {
+        padding: 3.5rem 1.25rem;
+    }
+}
+
+/* Mobiles standard */
 @media (max-width: 600px) {
     .accueil-cards-grille {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .accueil-card-glass {
@@ -623,5 +886,55 @@
 
     .accueil-hero-titre {
         font-size: 1.85rem;
+    }
+
+    .accueil-hero-desc {
+        font-size: 0.92rem;
+    }
+
+    .accueil-hero-image img {
+        height: 240px;
+    }
+
+    .accueil-hero-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-principal,
+    .btn-secondaire {
+        width: 100%;
+        padding: 0.85rem 1rem;
+    }
+
+    .titre-section {
+        font-size: 1.7rem;
+    }
+
+    /* Désactive les halos sur mobile (perf + clarté) */
+    .accueil-hero::before,
+    .accueil-hero::after {
+        display: none;
+    }
+}
+
+/* Petits mobiles */
+@media (max-width: 480px) {
+    .accueil-hero-titre {
+        font-size: 1.6rem;
+    }
+    .titre-section {
+        font-size: 1.5rem;
+    }
+    .accueil-formation-card,
+    .accueil-temoignage-card {
+        padding: 1.25rem;
+    }
+    .accueil-fonctionnement,
+    .accueil-valeurs,
+    .accueil-formations,
+    .accueil-partenaires,
+    .accueil-temoignages {
+        padding: 2.75rem 1rem;
     }
 }

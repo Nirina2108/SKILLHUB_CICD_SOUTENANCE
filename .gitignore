@@ -1,6 +1,7 @@
 # IDE / Editor
 .idea/
 .vscode/
+.claude/
 *.iml
 
 # OS

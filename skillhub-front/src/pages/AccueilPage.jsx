@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import formationService from '../services/formationService';
+import useScrollAnimation from '../hooks/useScrollAnimation';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ModalAuth from '../components/ModalAuth';
@@ -22,6 +23,13 @@ export default function AccueilPage() {
     // estConnecte() : helper du contexte qui retourne true si user connecté.
     const { estConnecte } = useAuth();
     const navigate = useNavigate();
+
+    // Refs pour animations scroll (Intersection Observer) — chaque section apparaît en fondu/slide.
+    const [refFonctionnement, visFonctionnement] = useScrollAnimation();
+    const [refValeurs, visValeurs] = useScrollAnimation();
+    const [refFormations, visFormations] = useScrollAnimation();
+    const [refPartenaires, visPartenaires] = useScrollAnimation();
+    const [refTemoignages, visTemoignages] = useScrollAnimation();
 
     // État local : 3 formations vedettes + drapeau de chargement + mode modal auth.
     const [formations,  setFormations]  = useState([]);
@@ -123,10 +131,39 @@ const partenaires = [
 
     return (
         <div className="accueil-page">
+            {/* SEO : React 19 hoiste automatiquement title/meta dans <head> */}
+            <title>SkillHub — Formations en ligne : développez vos compétences</title>
+            <meta name="description" content="SkillHub : plateforme de formations en ligne. Apprenez le développement web, la data, le design, le marketing avec des formateurs experts. Cours pratiques, projets réels, certificats." />
+            <meta name="keywords" content="formation en ligne, e-learning, développement web, data, design, marketing, devops, cours, MOOC, SkillHub" />
+            <meta name="author" content="SkillHub Team" />
+
+            {/* Open Graph (Facebook, LinkedIn) */}
+            <meta property="og:title" content="SkillHub — Formations en ligne pour booster votre carrière" />
+            <meta property="og:description" content="Plateforme moderne de formations en ligne. Apprenez à votre rythme avec des experts." />
+            <meta property="og:type" content="website" />
+            <meta property="og:url" content="http://localhost:5173/" />
+            <meta property="og:image" content="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80" />
+
+            {/* Twitter Card */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content="SkillHub — Formations en ligne" />
+            <meta name="twitter:description" content="Apprenez à votre rythme avec des formateurs experts." />
+
+            {/* Structured data : balise JSON-LD pour Google (rich snippets) */}
+            <script type="application/ld+json">{JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "EducationalOrganization",
+                "name": "SkillHub",
+                "description": "Plateforme de formations en ligne : développement web, data, design, marketing, devops.",
+                "url": "http://localhost:5173/",
+                "logo": "http://localhost:5173/logo.png",
+                "sameAs": []
+            })}</script>
+
             <Navbar />
 
             {/* HERO : section d'accroche en haut de page avec titre + image */}
-            <section className="accueil-hero">
+            <header className="accueil-hero">
                 <div className="accueil-hero-texte">
                     <h1 className="accueil-hero-titre">
                         Get <span className="mot-bleu">trained today</span>,<br />
@@ -160,14 +197,21 @@ const partenaires = [
                 <div className="accueil-hero-image">
                     <img
                         src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80"
-                        alt="Apprenants SkillHub"
+                        alt="Apprenants en formation SkillHub"
                         loading="lazy"
+                        width="1200"
+                        height="800"
                     />
                 </div>
-            </section>
+            </header>
+
+            <main>
 
             {/* COMMENT CA MARCHE : 4 cards "glass" avec image de fond + overlay sombre */}
-<section className="accueil-fonctionnement">
+<section
+    ref={refFonctionnement}
+    className={`accueil-fonctionnement scroll-animer ${visFonctionnement ? 'visible' : ''}`}
+>
     <h2 className="titre-section">Comment ca marche ?</h2>
     <div className="accueil-cards-grille">
         {/* Tableau anonyme + .map => 4 cards générées dynamiquement.
@@ -196,7 +240,10 @@ const partenaires = [
 </section>
 
             {/* NOS VALEURS : 3 cards avec image en arrière-plan via CSS variable --bg */}
-            <section className="accueil-valeurs">
+            <section
+                ref={refValeurs}
+                className={`accueil-valeurs scroll-animer ${visValeurs ? 'visible' : ''}`}
+            >
                 <h2 className="titre-section">Nos valeurs</h2>
                 <p className="sous-titre-section">Ce qui rend SkillHub unique au quotidien.</p>
                 <div className="accueil-valeurs-grille">
@@ -233,7 +280,10 @@ const partenaires = [
             </section>
 
             {/* FORMATIONS A LA UNE : 3 formations vedettes chargées depuis le backend */}
-            <section className="accueil-formations">
+            <section
+                ref={refFormations}
+                className={`accueil-formations scroll-animer ${visFormations ? 'visible' : ''}`}
+            >
                 <h2 className="titre-section">Formations a la une</h2>
                 {/* Helper qui rend chargement / vide / liste selon l'état */}
                 {renderFormationsAUne()}
@@ -248,7 +298,10 @@ const partenaires = [
             </section>
 
             {/* PARTENAIRES : carousel de logos universités/entreprises avec animation infinie */}
-<section className="accueil-partenaires">
+<section
+    ref={refPartenaires}
+    className={`accueil-partenaires scroll-animer ${visPartenaires ? 'visible' : ''}`}
+>
 
   <h2 className="titre-section">Nos Partenaires officiels</h2>
   <p className="accueil-partenaires-desc">
@@ -274,7 +327,10 @@ const partenaires = [
 
 </section>
             {/* TEMOIGNAGES : 3 cards avec avis utilisateurs */}
-            <section className="accueil-temoignages">
+            <section
+                ref={refTemoignages}
+                className={`accueil-temoignages scroll-animer ${visTemoignages ? 'visible' : ''}`}
+            >
                 <h2 className="titre-section">Ils nous font confiance</h2>
                 <div className="accueil-temoignages-grille">
                     {/* Boucle sur le tableau temoignages déclaré en haut du composant */}
@@ -293,6 +349,8 @@ const partenaires = [
                     ))}
                 </div>
             </section>
+
+            </main>
 
             <Footer />
 
