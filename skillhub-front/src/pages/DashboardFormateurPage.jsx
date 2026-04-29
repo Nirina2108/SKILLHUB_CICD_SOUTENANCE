@@ -10,6 +10,21 @@ import ModalFormation from '../components/ModalFormation';
 import ModalModules from '../components/ModalModules';
 import './DashboardFormateurPage.css';
 
+/*
+ * Page dashboard du formateur.
+ *
+ * Affiche les formations créées par le formateur avec leur statistiques
+ * (vues, apprenants inscrits), un indicateur de présence du PDF, et permet
+ * de :
+ *  - Créer une nouvelle formation (avec PDF optionnel) via ModalFormation
+ *  - Modifier une formation existante (titre, description, PDF)
+ *  - Gérer les modules (leçons) via ModalModules
+ *  - Télécharger le PDF du cours
+ *  - Supprimer une formation
+ *  - Mettre à jour sa photo de profil
+ *
+ * Route : /dashboard/formateur (protégée par RouteFormateur dans App.jsx)
+ */
 export default function DashboardFormateurPage() {
     const { utilisateur, setUtilisateur } = useAuth();
     const navigate = useNavigate();
@@ -86,6 +101,16 @@ export default function DashboardFormateurPage() {
         setFormationModif(null);
         chargerFormations();
         setTimeout(() => setMessageOk(''), 3000);
+    };
+
+    const handleTelechargerPdf = async (formation) => {
+        try {
+            await formationService.telechargerPdf(formation.id, formation.titre);
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Erreur lors du téléchargement.';
+            setErreur(msg);
+            setTimeout(() => setErreur(''), 3000);
+        }
     };
 
     const getNiveauLabel = (n) => ({
@@ -260,6 +285,14 @@ export default function DashboardFormateurPage() {
                                         {formation.description?.length > 90 ? '...' : ''}
                                     </p>
 
+                                    <div className="df-card-pdf">
+                                        {formation.fichier_pdf ? (
+                                            <span className="df-pdf-ok">📄 Cours PDF disponible</span>
+                                        ) : (
+                                            <span className="df-pdf-manquant">⚠ Aucun PDF uploadé</span>
+                                        )}
+                                    </div>
+
                                     <div className="df-card-stats">
                                         <div className="df-stat-mini">
                                             <span className="df-stat-mini-val">{formation.nombre_de_vues}</span>
@@ -304,6 +337,16 @@ export default function DashboardFormateurPage() {
                                         >
                                             Modules
                                         </Bouton>
+
+                                        {formation.fichier_pdf && (
+                                            <Bouton
+                                                variante="secondaire"
+                                                taille="petit"
+                                                onClick={() => handleTelechargerPdf(formation)}
+                                            >
+                                                PDF
+                                            </Bouton>
+                                        )}
                                     </div>
 
                                     <div className="df-card-actions-supprimer">

@@ -7,7 +7,17 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 /**
- * Service d envoi d emails de confirmation.
+ * Service d'envoi d'emails de confirmation d'inscription.
+ *
+ * Utilise JavaMailSender (Spring Mail) configuré via les variables d'env
+ * MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD (voir application.properties).
+ *
+ * Le @Autowired(required=false) permet à l'application de démarrer même
+ * si la config mail est absente (utile en dev / tests). Dans ce cas, les
+ * appels à send() loguent simplement un warning sans planter.
+ *
+ * Le baseUrl est utilisé pour construire le lien de vérification
+ * (ex : http://localhost:8000/api/auth/verify-email?token=xxx).
  *
  * @author Nirina
  * @version 1.1

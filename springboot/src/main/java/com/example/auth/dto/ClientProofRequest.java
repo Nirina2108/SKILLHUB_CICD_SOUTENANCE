@@ -1,10 +1,15 @@
 package com.example.auth.dto;
 
 /**
- * DTO utilisé pour simuler le calcul côté client.
+ * Payload reçu sur POST /api/auth/client-proof (endpoint démo).
  *
- * Ce DTO sert uniquement à construire une preuve HMAC
- * à partir d'un email et d'un mot de passe saisi.
+ * Sert à demander au serveur de SIMULER ce que le client devrait calculer
+ * localement : la preuve HMAC à partir du couple email + password.
+ *
+ * En production réelle, ce calcul est fait dans le navigateur ou l'app
+ * mobile pour ne JAMAIS transmettre le mot de passe sur le réseau.
+ * Cet endpoint existe uniquement pour faciliter les tests Postman / curl
+ * pendant la démo de soutenance.
  *
  * @author Poun
  * @version 3.2

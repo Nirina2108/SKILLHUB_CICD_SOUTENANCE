@@ -12,7 +12,17 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
 /**
- * Contrôleur de messagerie entre utilisateurs.
+ * Contrôleur de messagerie entre utilisateurs (formateurs <-> apprenants).
+ *
+ * Gère les conversations 1:1 stockées dans la table messages. Un message a un
+ * expéditeur, un destinataire, un contenu textuel et un flag "lu".
+ *
+ * Endpoints :
+ *  - nonLus          : compte des messages non lus pour le badge de la navbar.
+ *  - conversations   : liste agrégée des interlocuteurs avec dernier message + non lus.
+ *  - messagerie      : fil complet d'une conversation, marque les messages comme lus.
+ *  - envoyer         : envoie un nouveau message (+ email si premier de la conversation).
+ *  - interlocuteurs  : liste des utilisateurs contactables selon le rôle.
  */
 class MessageController extends Controller
 {
@@ -20,7 +30,10 @@ class MessageController extends Controller
     private const MESSAGE_ENVOYE_MESSAGE = 'Message envoyé';
 
     /**
-     * Récupère le nombre de messages non lus de l'utilisateur connecté.
+     * Renvoie le nombre total de messages non lus reçus par l'utilisateur connecté.
+     * Route : GET /api/messages/non-lus
+     *
+     * Sert au frontend pour afficher un badge sur l'icône messagerie de la navbar.
      */
     public function nonLus(): JsonResponse
     {
@@ -29,6 +42,7 @@ class MessageController extends Controller
             return $this->reponseNonAutorise();
         }
 
+        // Compte simple : messages reçus avec lu=false.
         $count = Message::where('destinataire_id', $user->id)
                         ->where('lu', false)
                         ->count();
@@ -209,10 +223,12 @@ class MessageController extends Controller
         return response()->json(['interlocuteurs' => $utilisateurs]);
     }
 
-    // ─── Helpers privés ──────────────────────────────────────────
+    // Helpers privés mutualisés entre les méthodes du contrôleur.
 
     /**
-     * Récupère l'utilisateur authentifié via JWT.
+     * Authentifie l'utilisateur via JWT et retourne null en cas d'échec.
+     * Toutes les méthodes publiques s'appuient sur ce helper pour éviter
+     * la duplication des try/catch JWTException.
      */
     private function utilisateurConnecte()
     {
@@ -224,7 +240,7 @@ class MessageController extends Controller
     }
 
     /**
-     * Réponse standard 401 non autorisé.
+     * Réponse JSON standard pour les requêtes non autorisées (token absent/invalide).
      */
     private function reponseNonAutorise(): JsonResponse
     {

@@ -5,15 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Modèle Inscription
- * Représente l'inscription d'un apprenant à une formation.
+ * Modèle Inscription : représente l'inscription d'un apprenant à une formation.
+ *
+ * Chaque ligne contient :
+ *  - utilisateur_id : référence à l'apprenant (User avec role=apprenant)
+ *  - formation_id   : référence à la formation suivie
+ *  - progression    : pourcentage 0-100 calculé à partir des modules terminés
+ *
+ * La désinscription supprime physiquement la ligne (la progression est perdue).
  */
 class Inscription extends Model
 {
     /**
-     * Champs autorisés pour l'insertion.
-     *
-     * @var array<int, string>
+     * Champs autorisés en mass-assignment.
      */
     protected $fillable = [
         'utilisateur_id',
@@ -22,7 +26,7 @@ class Inscription extends Model
     ];
 
     /**
-     * Relation vers l'utilisateur.
+     * Relation N-1 : l'inscription appartient à un utilisateur (apprenant).
      */
     public function utilisateur()
     {
@@ -30,7 +34,7 @@ class Inscription extends Model
     }
 
     /**
-     * Relation vers la formation.
+     * Relation N-1 : l'inscription concerne une formation.
      */
     public function formation()
     {

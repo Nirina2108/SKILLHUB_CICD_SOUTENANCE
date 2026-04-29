@@ -1,11 +1,15 @@
 package com.example.auth.dto;
 
 /**
- * DTO utilise pour demander un changement de mot de passe.
+ * Payload reçu sur PUT /api/auth/change-password.
  *
- * Ce fichier contient :
- * - l'ancien mot de passe
- * - le nouveau mot de passe
+ * AuthService.changePassword vérifie d'abord que oldPassword correspond
+ * au mot de passe actuel (déchiffrement AES-GCM puis comparaison) avant
+ * d'écraser avec newPassword. Cela protège contre un attaquant qui aurait
+ * volé un JWT mais ne connaîtrait pas le mot de passe.
+ *
+ * Le nouveau mot de passe est validé par PasswordPolicyValidator avant
+ * d'être chiffré et persisté.
  *
  * @author Poun
  * @version 5.0

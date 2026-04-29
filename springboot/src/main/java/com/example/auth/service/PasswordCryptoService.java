@@ -12,15 +12,22 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 /**
- * Service de chiffrement réversible des mots de passe.
+ * Service de chiffrement RÉVERSIBLE des mots de passe (AES-GCM).
  *
- * Ce service existe uniquement pour le TP3 afin de permettre au serveur
- * de retrouver le secret utilisateur et de recalculer un HMAC côté serveur.
+ * Contrairement à BCrypt (hachage à sens unique), ici les mots de passe sont
+ * CHIFFRÉS de manière réversible avec AES-256-GCM. Cette particularité est
+ * indispensable au protocole HMAC challenge-response : le serveur doit pouvoir
+ * récupérer le mot de passe (ou une dérivée déterministe) pour recalculer la
+ * preuve HMAC envoyée par le client.
  *
- * ✅ Fix java:S5542 — AES/GCM/NoPadding (mode authentifié, padding inutile).
- * ✅ Fix java:S2119 — SecureRandom réutilisé via un champ static final.
+ * En contrepartie, la clé maître AES doit être protégée comme un secret de
+ * niveau bancaire (HSM, vault, jamais committée). Si la clé est compromise,
+ * tous les mots de passe le sont.
  *
- * Format du résultat : Base64( IV (12 octets) + données chiffrées + tag GCM )
+ * Mode AES/GCM/NoPadding : authentifié (intègre le tag d'authentification),
+ * pas besoin de padding. Tag de 128 bits, IV aléatoire de 12 octets par chiffrement.
+ *
+ * Format du résultat : Base64( IV (12 octets) + données chiffrées + tag GCM (16 octets) )
  *
  * @author Poun
  * @version 3.3

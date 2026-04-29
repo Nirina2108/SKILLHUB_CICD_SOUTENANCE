@@ -18,14 +18,28 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Service contenant la logique metier de l authentification.
+ * Service métier central de l'authentification.
  *
- * Moustass CloudSec :
- * - JWT remplace l ancien token UUID
- * - confirmation email obligatoire
- * - paire de cles RSA generee a l inscription
- * - log des transactions
- * - changement de mot de passe pour un utilisateur authentifie
+ * Orchestre toutes les opérations liées au cycle de vie d'un compte utilisateur :
+ *  - register : crée un User en base, hache le mot de passe, génère une paire RSA,
+ *    envoie un email de vérification.
+ *  - verifyEmail : valide le token de vérification et active le compte.
+ *  - login : prend une preuve HMAC, recalcule la preuve attendue côté serveur,
+ *    compare, génère un JWT en cas de succès, journalise la transaction.
+ *  - getMe : retourne les infos de l'utilisateur identifié par le JWT.
+ *  - logout : invalide le token côté serveur (token=null en base).
+ *  - changePassword : change le mot de passe (vérifie l'ancien d'abord).
+ *
+ * Délègue le calcul cryptographique à PasswordCryptoService (AES/GCM),
+ * la génération JWT à JwtService, l'envoi d'email à EmailService, et la
+ * journalisation à TransactionLogService.
+ *
+ * Moustass CloudSec — Caractéristiques sécurité :
+ * - JWT à durée courte remplaçant l'ancien token UUID infini
+ * - Vérification email obligatoire avant toute connexion
+ * - Paire de clés RSA générée et stockée à l'inscription (pour fonctionnalités futures)
+ * - Log d'audit de toutes les transactions sensibles
+ * - Validation de robustesse du mot de passe via PasswordPolicyValidator
  *
  * SkillHub :
  * - gestion du role apprenant / formateur

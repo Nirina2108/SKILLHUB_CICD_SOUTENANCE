@@ -2,6 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../services/axiosConfig';
 import './MessagerieModal.css';
 
+/*
+ * Modal de messagerie 1:1 entre apprenants et formateurs.
+ *
+ * Layout en deux panneaux :
+ *  - Liste des conversations existantes (avec dernier message + nb non lus)
+ *    + un onglet "Nouvelle conversation" qui liste les interlocuteurs disponibles.
+ *  - Fil de la conversation active avec input de saisie.
+ *
+ * À chaque ouverture d'une conversation, les messages reçus non lus sont
+ * automatiquement marqués comme lus côté backend (logique dans MessageController).
+ *
+ * @param {object} props
+ * @param {function} props.onFermer Ferme la modal
+ */
 export default function MessagerieModal({ onFermer }) {
 
     const [conversations,  setConversations]  = useState([]);

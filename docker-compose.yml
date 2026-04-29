@@ -10,7 +10,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: skillhub
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - skillhub_mysql_data:/var/lib/mysql
     healthcheck:

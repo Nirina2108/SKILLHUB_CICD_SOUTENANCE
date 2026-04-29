@@ -23,8 +23,18 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Controller pour la gestion du profil utilisateur.
- * Permet l upload et la recuperation de la photo de profil.
+ * Contrôleur REST pour la gestion du profil utilisateur.
+ *
+ * Expose deux endpoints :
+ *  - POST /api/profile/avatar : upload de la photo de profil (multipart, image/*)
+ *  - GET  /api/profile/me     : récupération du profil complet de l'utilisateur courant
+ *
+ * Le fichier uploadé est stocké sur le filesystem dans le dossier configurable
+ * app.upload.dir (par défaut : uploads/avatars/) avec un UUID comme nom pour
+ * éviter les collisions et les attaques par chemin (path traversal).
+ *
+ * L'URL absolue de l'avatar (basée sur app.base.url) est sauvegardée dans
+ * le champ avatar de l'entité User, prête à être servie au frontend.
  *
  * @author Nirina
  * @version 1.1

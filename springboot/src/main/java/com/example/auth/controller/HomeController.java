@@ -4,14 +4,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Controleur simple pour verifier que l'application fonctionne.
+ * Contrôleur de health-check minimal.
+ *
+ * Sert à vérifier rapidement (curl, navigateur, monitoring) que l'application
+ * Spring Boot a démarré correctement et que le serveur HTTP répond. Utile
+ * dans le contexte CI/CD pour confirmer qu'un container Docker est sain
+ * avant de lui envoyer du trafic réel.
  */
 @RestController
 public class HomeController {
 
     /**
-     * Route racine.
-     * @return message simple
+     * Endpoint racine de l'application.
+     *
+     * @return message texte plain confirmant que le service est opérationnel
      */
     @GetMapping("/")
     public String home() {

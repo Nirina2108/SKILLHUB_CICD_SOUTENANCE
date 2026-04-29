@@ -5,38 +5,42 @@ import Bouton from './Bouton';
 import './ModalAuth.css';
 
 /**
- * Modal d'authentification.
- * Contient les formulaires de connexion et d'inscription.
+ * Modal d'authentification : un overlay qui contient deux onglets,
+ * "Se connecter" et "S'inscrire", avec leurs formulaires respectifs.
  *
- * Props :
- * - mode : 'login' | 'register'
- * - onFermer : fonction pour fermer la modal
+ * Après succès, la modal redirige vers le dashboard correspondant au rôle
+ * de l'utilisateur (formateur ou apprenant).
+ *
+ * @param {object} props
+ * @param {('login'|'register')} [props.mode='login'] Onglet ouvert par défaut
+ * @param {function} props.onFermer Callback de fermeture de la modal
  */
 export default function ModalAuth({ mode = 'login', onFermer }) {
     const { login, register } = useAuth();
     const navigate = useNavigate();
 
+    // Onglet actuellement affiché.
     const [onglet, setOnglet] = useState(mode);
 
-    // Champs login
+    // Formulaire login : deux champs simples.
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // Champs register
+    // Formulaire register : champs séparés du login pour permettre les deux ouverts en parallèle.
     const [nom, setNom] = useState('');
     const [emailReg, setEmailReg] = useState('');
     const [passwordReg, setPasswordReg] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [role, setRole] = useState('apprenant');
 
+    // États communs aux deux formulaires : message de succès / erreur, drapeau de chargement.
     const [erreur, setErreur] = useState('');
     const [messageOk, setMessageOk] = useState('');
     const [chargement, setChargement] = useState(false);
 
     /**
-     * Ferme la modal si clic sur l'arrière-plan.
-     *
-     * @param {object} e
+     * Ferme la modal au clic sur l'arrière-plan (UX standard de modal).
+     * On vérifie que la cible est bien le conteneur (pas un enfant).
      */
     const handleOverlayClick = (e) => {
         if (e.target === e.currentTarget) {
@@ -45,9 +49,9 @@ export default function ModalAuth({ mode = 'login', onFermer }) {
     };
 
     /**
-     * Connexion.
-     *
-     * @param {object} e
+     * Soumet le formulaire de login. En cas de succès, ferme la modal et
+     * redirige vers le bon dashboard selon le rôle. En cas d'erreur, affiche
+     * le message renvoyé par le backend (ou un fallback générique).
      */
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -78,15 +82,24 @@ export default function ModalAuth({ mode = 'login', onFermer }) {
     };
 
     /**
-     * Inscription.
+     * Soumet le formulaire d'inscription.
      *
-     * @param {object} e
+     * Étapes :
+     *  1. Validation côté client : confirmation du mot de passe identique.
+     *  2. Appel à l'API via authService (qui stocke le token automatiquement).
+     *  3. Si le backend renvoie un token et un user (auto-login), redirection
+     *     vers le dashboard.
+     *  4. Sinon, affichage d'un message de succès et bascule sur l'onglet login.
+     *
+     * Gestion d'erreurs : on essaie d'afficher les erreurs de validation Laravel
+     * (objet errors) en les concaténant, sinon on tombe sur un message générique.
      */
     const handleRegister = async (e) => {
         e.preventDefault();
         setErreur('');
         setMessageOk('');
 
+        // Validation côté client avant l'appel réseau pour éviter une requête inutile.
         if (passwordReg !== passwordConfirmation) {
             setErreur('Les mots de passe ne correspondent pas.');
             return;
@@ -98,6 +111,7 @@ export default function ModalAuth({ mode = 'login', onFermer }) {
             const data = await register(nom, emailReg, passwordReg, passwordConfirmation, role);
 
             if (data?.token && data?.user) {
+                // Auto-login : la modal se ferme et on redirige vers le dashboard.
                 onFermer();
 
                 if (data.user.role === 'formateur') {
@@ -106,6 +120,8 @@ export default function ModalAuth({ mode = 'login', onFermer }) {
                     navigate('/dashboard/apprenant');
                 }
             } else {
+                // Cas où le backend ne fait pas d'auto-login : on affiche un message
+                // et on bascule l'onglet vers login après une courte pause.
                 setMessageOk(data?.message || 'Compte créé avec succès.');
                 setNom('');
                 setEmailReg('');

@@ -5,15 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Modèle Message.
- * Stocké en MySQL dans la table messages.
+ * Modèle Message : stocke un message envoyé entre deux utilisateurs.
+ *
+ * Stockage : table MySQL "messages". Pour la conversation en temps réel,
+ * un système plus avancé (WebSocket, broadcasting) serait nécessaire ;
+ * ici la lecture se fait par polling depuis le frontend.
+ *
+ * Champ "lu" : passe à true côté destinataire dès qu'il ouvre la conversation
+ * (logique dans MessageController::messagerie).
  */
 class Message extends Model
 {
     /**
-     * Champs autorisés.
-     *
-     * @var array<int, string>
+     * Champs autorisés en mass-assignment.
      */
     protected $fillable = [
         'expediteur_id',
@@ -23,16 +27,14 @@ class Message extends Model
     ];
 
     /**
-     * Casts automatiques.
-     *
-     * @var array<string, string>
+     * Casts automatiques : "lu" est un tinyint en BDD, exposé en booléen côté PHP/JSON.
      */
     protected $casts = [
         'lu' => 'boolean',
     ];
 
     /**
-     * Relation : utilisateur expéditeur.
+     * Relation N-1 : le message a un expéditeur.
      */
     public function expediteur()
     {
@@ -40,7 +42,7 @@ class Message extends Model
     }
 
     /**
-     * Relation : utilisateur destinataire.
+     * Relation N-1 : le message a un destinataire.
      */
     public function destinataire()
     {

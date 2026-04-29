@@ -8,6 +8,16 @@ import Footer from '../components/Footer';
 import Bouton from '../components/Bouton';
 import './DashboardApprenantPage.css';
 
+/*
+ * Page dashboard de l'apprenant.
+ *
+ * Affiche la liste des formations auxquelles l'apprenant est inscrit avec
+ * leur progression individuelle, des statistiques globales (nombre total,
+ * progression moyenne, formations terminées), et un filtre par statut
+ * (en cours / terminée). Permet aussi de changer la photo de profil.
+ *
+ * Route : /dashboard/apprenant (protégée par RouteApprenant dans App.jsx)
+ */
 export default function DashboardApprenantPage() {
     const { utilisateur, setUtilisateur } = useAuth();
     const navigate = useNavigate();

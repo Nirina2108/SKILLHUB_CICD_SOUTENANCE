@@ -1,13 +1,21 @@
 import { Link } from 'react-router-dom';
 import './Footer.css';
 
+/**
+ * Pied de page commun à toutes les pages publiques et privées.
+ *
+ * Affiche le branding SkillHub, un bandeau newsletter (présentation seulement),
+ * la navigation principale, les liens légaux, les réseaux sociaux et le copyright.
+ *
+ * L'année du copyright est calculée dynamiquement pour rester à jour automatiquement.
+ */
 export default function Footer() {
     const annee = new Date().getFullYear();
 
     return (
         <footer className="footer">
 
-            {/* Bandeau supérieur */}
+            {/* Bandeau supérieur : branding + newsletter + bouton retour en haut. */}
             <div className="footer-bandeau">
                 <div className="footer-brand">
                     <span className="footer-brand-nom">SKILLHUB</span>
