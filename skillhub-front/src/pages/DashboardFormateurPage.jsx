@@ -126,6 +126,126 @@ export default function DashboardFormateurPage() {
     const totalVues = formations.reduce((s, f) => s + (f.nombre_de_vues || 0), 0);
     const totalApprenants = formations.reduce((s, f) => s + (f.inscriptions_count || 0), 0);
 
+    // Helper extrayant la branche conditionnelle (chargement / vide / liste des cards).
+    // Évite le ternaire imbriqué que SonarLint flagge (javascript:S3358).
+    const renderFormationsListe = () => {
+        if (chargement) {
+            return (
+                <div className="df-chargement">
+                    <div className="df-spinner" />
+                    <p>Chargement de vos formations...</p>
+                </div>
+            );
+        }
+        if (formationsFiltrees.length === 0) {
+            return (
+                <div className="df-vide">
+                    <p>Aucune formation dans cette categorie.</p>
+                    <Bouton variante="principal" onClick={() => setModalFormationOuverte(true)}>
+                        Creer une formation
+                    </Bouton>
+                </div>
+            );
+        }
+        return (
+            <div className="df-grille">
+                {formationsFiltrees.map((formation) => (
+                    <div key={formation.id} className="df-card">
+                        <div className={`df-card-bandeau df-bandeau-${formation.niveau}`} />
+
+                        <div className="df-card-body">
+                            <div className="df-card-badges">
+                                <span className="df-badge-niveau">{getNiveauLabel(formation.niveau)}</span>
+                                <span className="df-badge-categorie">{formation.categorie?.replace('_', ' ')}</span>
+                            </div>
+
+                            <h3 className="df-card-titre">{formation.titre}</h3>
+
+                            <p className="df-card-description">
+                                {formation.description?.slice(0, 90)}
+                                {formation.description?.length > 90 ? '...' : ''}
+                            </p>
+
+                            <div className="df-card-pdf">
+                                {formation.fichier_pdf ? (
+                                    <span className="df-pdf-ok">📄 Cours PDF disponible</span>
+                                ) : (
+                                    <span className="df-pdf-manquant">⚠ Aucun PDF uploadé</span>
+                                )}
+                            </div>
+
+                            <div className="df-card-stats">
+                                <div className="df-stat-mini">
+                                    <span className="df-stat-mini-val">{formation.nombre_de_vues}</span>
+                                    <span className="df-stat-mini-label">vues</span>
+                                </div>
+
+                                <div className="df-stat-mini">
+                                    <span className="df-stat-mini-val">{formation.inscriptions_count}</span>
+                                    <span className="df-stat-mini-label">apprenants</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="df-card-actions">
+                            <div className="df-card-actions-ligne">
+                                <Bouton
+                                    variante="fantome"
+                                    taille="petit"
+                                    onClick={() => navigate(`/formation/${formation.id}`)}
+                                >
+                                    Voir
+                                </Bouton>
+
+                                <Bouton
+                                    variante="secondaire"
+                                    taille="petit"
+                                    onClick={() => {
+                                        setFormationModif(formation);
+                                        setModalFormationOuverte(true);
+                                    }}
+                                >
+                                    Modifier
+                                </Bouton>
+
+                                <Bouton
+                                    variante="secondaire"
+                                    taille="petit"
+                                    onClick={() => {
+                                        setFormationModules(formation);
+                                        setModalModulesOuverte(true);
+                                    }}
+                                >
+                                    Modules
+                                </Bouton>
+
+                                {formation.fichier_pdf && (
+                                    <Bouton
+                                        variante="secondaire"
+                                        taille="petit"
+                                        onClick={() => handleTelechargerPdf(formation)}
+                                    >
+                                        PDF
+                                    </Bouton>
+                                )}
+                            </div>
+
+                            <div className="df-card-actions-supprimer">
+                                <Bouton
+                                    variante="danger"
+                                    taille="petit"
+                                    onClick={() => handleSupprimer(formation.id)}
+                                >
+                                    Supprimer
+                                </Bouton>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <div className="df-page">
             <Navbar />
@@ -254,115 +374,7 @@ export default function DashboardFormateurPage() {
                     </span>
                 </div>
 
-                {chargement ? (
-                    <div className="df-chargement">
-                        <div className="df-spinner" />
-                        <p>Chargement de vos formations...</p>
-                    </div>
-                ) : formationsFiltrees.length === 0 ? (
-                    <div className="df-vide">
-                        <p>Aucune formation dans cette categorie.</p>
-                        <Bouton variante="principal" onClick={() => setModalFormationOuverte(true)}>
-                            Creer une formation
-                        </Bouton>
-                    </div>
-                ) : (
-                    <div className="df-grille">
-                        {formationsFiltrees.map((formation) => (
-                            <div key={formation.id} className="df-card">
-                                <div className={`df-card-bandeau df-bandeau-${formation.niveau}`} />
-
-                                <div className="df-card-body">
-                                    <div className="df-card-badges">
-                                        <span className="df-badge-niveau">{getNiveauLabel(formation.niveau)}</span>
-                                        <span className="df-badge-categorie">{formation.categorie?.replace('_', ' ')}</span>
-                                    </div>
-
-                                    <h3 className="df-card-titre">{formation.titre}</h3>
-
-                                    <p className="df-card-description">
-                                        {formation.description?.slice(0, 90)}
-                                        {formation.description?.length > 90 ? '...' : ''}
-                                    </p>
-
-                                    <div className="df-card-pdf">
-                                        {formation.fichier_pdf ? (
-                                            <span className="df-pdf-ok">📄 Cours PDF disponible</span>
-                                        ) : (
-                                            <span className="df-pdf-manquant">⚠ Aucun PDF uploadé</span>
-                                        )}
-                                    </div>
-
-                                    <div className="df-card-stats">
-                                        <div className="df-stat-mini">
-                                            <span className="df-stat-mini-val">{formation.nombre_de_vues}</span>
-                                            <span className="df-stat-mini-label">vues</span>
-                                        </div>
-
-                                        <div className="df-stat-mini">
-                                            <span className="df-stat-mini-val">{formation.inscriptions_count}</span>
-                                            <span className="df-stat-mini-label">apprenants</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="df-card-actions">
-                                    <div className="df-card-actions-ligne">
-                                        <Bouton
-                                            variante="fantome"
-                                            taille="petit"
-                                            onClick={() => navigate(`/formation/${formation.id}`)}
-                                        >
-                                            Voir
-                                        </Bouton>
-
-                                        <Bouton
-                                            variante="secondaire"
-                                            taille="petit"
-                                            onClick={() => {
-                                                setFormationModif(formation);
-                                                setModalFormationOuverte(true);
-                                            }}
-                                        >
-                                            Modifier
-                                        </Bouton>
-
-                                        <Bouton
-                                            variante="secondaire"
-                                            taille="petit"
-                                            onClick={() => {
-                                                setFormationModules(formation);
-                                                setModalModulesOuverte(true);
-                                            }}
-                                        >
-                                            Modules
-                                        </Bouton>
-
-                                        {formation.fichier_pdf && (
-                                            <Bouton
-                                                variante="secondaire"
-                                                taille="petit"
-                                                onClick={() => handleTelechargerPdf(formation)}
-                                            >
-                                                PDF
-                                            </Bouton>
-                                        )}
-                                    </div>
-
-                                    <div className="df-card-actions-supprimer">
-                                        <Bouton
-                                            variante="danger"
-                                            taille="petit"
-                                            onClick={() => handleSupprimer(formation.id)}
-                                        >
-                                            Supprimer
-                                        </Bouton>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                {renderFormationsListe()}
             </div>
 
             <Footer />

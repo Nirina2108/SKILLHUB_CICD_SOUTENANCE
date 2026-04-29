@@ -112,6 +112,31 @@ export default function MessagerieModal({ onFermer }) {
         }
     };
 
+    // Helper extrayant la branche conditionnelle de la liste des conversations.
+    // Évite le ternaire imbriqué que SonarLint flagge (javascript:S3358).
+    const renderConversationsListe = () => {
+        if (chargementInit) {
+            return <p className="msg-vide">Chargement...</p>;
+        }
+        if (conversations.length === 0) {
+            return <p className="msg-vide">Aucune conversation — cliquez ✏️ pour commencer</p>;
+        }
+        return conversations.map((conv) => (
+            <div
+                key={conv.interlocuteur_id}
+                className={`msg-conv-item ${convActive?.interlocuteur_id === conv.interlocuteur_id ? 'msg-conv-actif' : ''}`}
+                onClick={() => ouvrirConversation(conv)}
+            >
+                <div className="msg-avatar">{conv.interlocuteur_nom?.slice(0, 2).toUpperCase()}</div>
+                <div className="msg-conv-info">
+                    <span className="msg-conv-nom">{conv.interlocuteur_nom}</span>
+                    <span className="msg-conv-apercu">{conv.dernier_message}</span>
+                </div>
+                {conv.non_lus > 0 && <span className="msg-badge">{conv.non_lus}</span>}
+            </div>
+        ));
+    };
+
     return (
         <div className="msg-overlay" onClick={(e) => e.target === e.currentTarget && onFermer()}>
             <div className="msg-modal">
@@ -128,26 +153,7 @@ export default function MessagerieModal({ onFermer }) {
                     </div>
 
                     <div className="msg-conv-liste">
-                        {chargementInit ? (
-                            <p className="msg-vide">Chargement...</p>
-                        ) : conversations.length === 0 ? (
-                            <p className="msg-vide">Aucune conversation — cliquez ✏️ pour commencer</p>
-                        ) : (
-                            conversations.map((conv) => (
-                                <div
-                                    key={conv.interlocuteur_id}
-                                    className={`msg-conv-item ${convActive?.interlocuteur_id === conv.interlocuteur_id ? 'msg-conv-actif' : ''}`}
-                                    onClick={() => ouvrirConversation(conv)}
-                                >
-                                    <div className="msg-avatar">{conv.interlocuteur_nom?.slice(0, 2).toUpperCase()}</div>
-                                    <div className="msg-conv-info">
-                                        <span className="msg-conv-nom">{conv.interlocuteur_nom}</span>
-                                        <span className="msg-conv-apercu">{conv.dernier_message}</span>
-                                    </div>
-                                    {conv.non_lus > 0 && <span className="msg-badge">{conv.non_lus}</span>}
-                                </div>
-                            ))
-                        )}
+                        {renderConversationsListe()}
                     </div>
                 </div>
 

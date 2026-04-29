@@ -78,6 +78,38 @@ const partenaires = [
         return labels[niveau] || niveau;
     };
 
+    // Helper extrayant la branche conditionnelle (chargement / vide / liste).
+    // Évite le ternaire imbriqué que SonarLint flagge (javascript:S3358).
+    const renderFormationsAUne = () => {
+        if (chargement) {
+            return <p className="accueil-chargement">Chargement...</p>;
+        }
+        if (formations.length === 0) {
+            return <p className="accueil-vide">Aucune formation disponible pour le moment.</p>;
+        }
+        return (
+            <div className="accueil-formations-grille">
+                {formations.map((formation) => (
+                    <div key={formation.id} className="accueil-formation-card">
+                        <span className="accueil-badge-niveau">
+                            {getNiveauLabel(formation.niveau)}
+                        </span>
+                        <h3>{formation.titre}</h3>
+                        <p className="accueil-formation-formateur">
+                            Par {formation.formateur?.nom}
+                        </p>
+                        <button
+                            className="btn-principal"
+                            onClick={() => navigate(`/formation/${formation.id}`)}
+                        >
+                            Voir le detail
+                        </button>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <div className="accueil-page">
             <Navbar />
@@ -187,31 +219,7 @@ const partenaires = [
             {/* FORMATIONS A LA UNE */}
             <section className="accueil-formations">
                 <h2 className="titre-section">Formations a la une</h2>
-                {chargement ? (
-                    <p className="accueil-chargement">Chargement...</p>
-                ) : formations.length === 0 ? (
-                    <p className="accueil-vide">Aucune formation disponible pour le moment.</p>
-                ) : (
-                    <div className="accueil-formations-grille">
-                        {formations.map((formation) => (
-                            <div key={formation.id} className="accueil-formation-card">
-                                <span className="accueil-badge-niveau">
-                                    {getNiveauLabel(formation.niveau)}
-                                </span>
-                                <h3>{formation.titre}</h3>
-                                <p className="accueil-formation-formateur">
-                                    Par {formation.formateur?.nom}
-                                </p>
-                                <button
-                                    className="btn-principal"
-                                    onClick={() => navigate(`/formation/${formation.id}`)}
-                                >
-                                    Voir le detail
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                {renderFormationsAUne()}
                 <div className="accueil-voir-tout">
                     <button
                         className="btn-secondaire"

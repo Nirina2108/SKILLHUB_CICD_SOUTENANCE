@@ -105,6 +105,97 @@ export default function ModalModules({ formation, onFermer }) {
         }
     };
 
+    // Rend une card module selon le mode (édition ou affichage simple).
+    // Helper extrait pour éviter le ternaire imbriqué SonarLint javascript:S3358.
+    const renderModuleCard = (module) => {
+        if (moduleModif?.id === module.id) {
+            return (
+                <form onSubmit={handleModifier} className="mm-form-modif">
+                    <input
+                        type="text"
+                        value={moduleModif.titre}
+                        onChange={(e) => setModuleModif({ ...moduleModif, titre: e.target.value })}
+                        className="mm-input"
+                        required
+                    />
+                    <textarea
+                        value={moduleModif.contenu}
+                        onChange={(e) => setModuleModif({ ...moduleModif, contenu: e.target.value })}
+                        className="mm-textarea"
+                        rows={3}
+                        required
+                    />
+                    <input
+                        type="number"
+                        value={moduleModif.ordre}
+                        onChange={(e) => setModuleModif({ ...moduleModif, ordre: parseInt(e.target.value) })}
+                        className="mm-input-ordre"
+                        min={1}
+                        required
+                    />
+                    <div className="mm-item-actions">
+                        <Bouton type="submit" variante="principal" taille="petit">
+                            Sauvegarder
+                        </Bouton>
+                        <Bouton variante="secondaire" taille="petit" onClick={() => setModuleModif(null)}>
+                            Annuler
+                        </Bouton>
+                    </div>
+                </form>
+            );
+        }
+        return (
+            <>
+                <div className="mm-item-info">
+                    <span className="mm-item-ordre">{module.ordre}</span>
+                    <div>
+                        <p className="mm-item-titre">{module.titre}</p>
+                        <p className="mm-item-apercu">
+                            {module.contenu?.slice(0, 60)}
+                            {module.contenu?.length > 60 ? '...' : ''}
+                        </p>
+                    </div>
+                </div>
+                <div className="mm-item-actions">
+                    <Bouton
+                        variante="secondaire"
+                        taille="petit"
+                        onClick={() => setModuleModif({ ...module })}
+                    >
+                        Modifier
+                    </Bouton>
+                    <Bouton
+                        variante="danger"
+                        taille="petit"
+                        onClick={() => handleSupprimer(module.id)}
+                    >
+                        Supprimer
+                    </Bouton>
+                </div>
+            </>
+        );
+    };
+
+    // Helper extrayant la branche conditionnelle (chargement / vide / liste).
+    // Évite le ternaire imbriqué que SonarLint flagge (javascript:S3358).
+    const renderModulesListe = () => {
+        if (chargement) {
+            return <p className="mm-chargement">Chargement...</p>;
+        }
+        if (modules.length === 0) {
+            return <p className="mm-vide">Aucun module pour cette formation.</p>;
+        }
+        return (
+            <div className="mm-liste">
+                {modules.map((module) => (
+                    <div key={module.id} className="mm-item">
+                        {renderModuleCard(module)}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <div className="mm-overlay" onClick={handleOverlayClick}>
             <div className="mm-boite">
@@ -119,85 +210,7 @@ export default function ModalModules({ formation, onFermer }) {
                 {erreur    && <p className="mm-erreur">{erreur}</p>}
 
                 {/* Liste des modules existants */}
-                {chargement ? (
-                    <p className="mm-chargement">Chargement...</p>
-                ) : modules.length === 0 ? (
-                    <p className="mm-vide">Aucun module pour cette formation.</p>
-                ) : (
-                    <div className="mm-liste">
-                        {modules.map((module) => (
-                            <div key={module.id} className="mm-item">
-
-                                {/* Mode modification */}
-                                {moduleModif?.id === module.id ? (
-                                    <form onSubmit={handleModifier} className="mm-form-modif">
-                                        <input
-                                            type="text"
-                                            value={moduleModif.titre}
-                                            onChange={(e) => setModuleModif({ ...moduleModif, titre: e.target.value })}
-                                            className="mm-input"
-                                            required
-                                        />
-                                        <textarea
-                                            value={moduleModif.contenu}
-                                            onChange={(e) => setModuleModif({ ...moduleModif, contenu: e.target.value })}
-                                            className="mm-textarea"
-                                            rows={3}
-                                            required
-                                        />
-                                        <input
-                                            type="number"
-                                            value={moduleModif.ordre}
-                                            onChange={(e) => setModuleModif({ ...moduleModif, ordre: parseInt(e.target.value) })}
-                                            className="mm-input-ordre"
-                                            min={1}
-                                            required
-                                        />
-                                        <div className="mm-item-actions">
-                                            <Bouton type="submit" variante="principal" taille="petit">
-                                                Sauvegarder
-                                            </Bouton>
-                                            <Bouton variante="secondaire" taille="petit" onClick={() => setModuleModif(null)}>
-                                                Annuler
-                                            </Bouton>
-                                        </div>
-                                    </form>
-                                ) : (
-                                    // Mode affichage
-                                    <>
-                                        <div className="mm-item-info">
-                                            <span className="mm-item-ordre">{module.ordre}</span>
-                                            <div>
-                                                <p className="mm-item-titre">{module.titre}</p>
-                                                <p className="mm-item-apercu">
-                                                    {module.contenu?.slice(0, 60)}
-                                                    {module.contenu?.length > 60 ? '...' : ''}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="mm-item-actions">
-                                            <Bouton
-                                                variante="secondaire"
-                                                taille="petit"
-                                                onClick={() => setModuleModif({ ...module })}
-                                            >
-                                                Modifier
-                                            </Bouton>
-                                            <Bouton
-                                                variante="danger"
-                                                taille="petit"
-                                                onClick={() => handleSupprimer(module.id)}
-                                            >
-                                                Supprimer
-                                            </Bouton>
-                                        </div>
-                                    </>
-                                )}
-
-                            </div>
-                        ))}
-                    </div>
-                )}
+                {renderModulesListe()}
 
                 {/* Formulaire ajout module */}
                 {ajoutVisible ? (
