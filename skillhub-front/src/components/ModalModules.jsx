@@ -1,4 +1,6 @@
+// Hooks React : useState (état réactif), useEffect (effet de bord type "componentDidMount").
 import { useEffect, useState } from 'react';
+// Service métier qui parle à l'API Laravel (CRUD modules).
 import moduleService from '../services/moduleService';
 import Bouton from './Bouton';
 import './ModalModules.css';
@@ -15,27 +17,30 @@ import './ModalModules.css';
  * @param {function} props.onFermer Ferme la modal
  */
 export default function ModalModules({ formation, onFermer }) {
+    // Liste des modules récupérée du backend.
     const [modules,      setModules]      = useState([]);
-    const [chargement,   setChargement]   = useState(true);
+    const [chargement,   setChargement]   = useState(true);     // true tant que la 1re requête n'a pas répondu
     const [erreur,       setErreur]       = useState('');
     const [messageOk,    setMessageOk]    = useState('');
 
-    // Formulaire nouveau module
+    // États du formulaire d'ajout de nouveau module.
     const [titre,        setTitre]        = useState('');
     const [contenu,      setContenu]      = useState('');
-    const [ordre,        setOrdre]        = useState(1);
-    const [ajoutVisible, setAjoutVisible] = useState(false);
-    const [loadingAjout, setLoadingAjout] = useState(false);
+    const [ordre,        setOrdre]        = useState(1);         // ordre auto-rempli avec next available
+    const [ajoutVisible, setAjoutVisible] = useState(false);     // toggle visibilité du formulaire
+    const [loadingAjout, setLoadingAjout] = useState(false);     // bloque double-clic
 
-    // Module en cours de modification
+    // Module en cours de modification (null si aucun en cours).
+    // C'est un OBJET cloné qu'on édite, pour ne pas modifier l'original tant qu'on ne sauvegarde pas.
     const [moduleModif,  setModuleModif]  = useState(null);
 
+    // Charge la liste des modules depuis l'API et pré-remplit l'ordre suggéré.
     const chargerModules = async () => {
         setChargement(true);
         try {
             const data = await moduleService.getModules(formation.id);
             setModules(data);
-            // Pré-remplir l'ordre avec le prochain numéro disponible
+            // Suggestion d'ordre : prochain numéro disponible (length + 1).
             setOrdre(data.length + 1);
         } catch (error) {
             setErreur('Erreur lors du chargement des modules.');
@@ -44,14 +49,17 @@ export default function ModalModules({ formation, onFermer }) {
         }
     };
 
+    // useEffect avec [formation.id] : se déclenche au mount et si la formation change.
     useEffect(() => {
         chargerModules();
     }, [formation.id]);
 
+    // Ferme la modal au clic sur l'overlay (UX standard).
     const handleOverlayClick = (e) => {
         if (e.target === e.currentTarget) onFermer();
     };
 
+    // Soumission du formulaire d'ajout : crée le module puis recharge la liste.
     const handleAjouter = async (e) => {
         e.preventDefault();
         setErreur('');
@@ -59,11 +67,13 @@ export default function ModalModules({ formation, onFermer }) {
 
         try {
             await moduleService.creerModule(formation.id, { titre, contenu, ordre });
+            // Reset des champs après succès.
             setTitre('');
             setContenu('');
             setAjoutVisible(false);
             setMessageOk('Module ajouté avec succès.');
-            chargerModules();
+            chargerModules();    // re-fetch pour avoir la liste à jour
+            // Auto-clear du message après 3s.
             setTimeout(() => setMessageOk(''), 3000);
         } catch (error) {
             setErreur('Erreur lors de la création du module.');
@@ -72,6 +82,7 @@ export default function ModalModules({ formation, onFermer }) {
         }
     };
 
+    // Soumission de la modification d'un module existant.
     const handleModifier = async (e) => {
         e.preventDefault();
         setErreur('');
@@ -82,7 +93,7 @@ export default function ModalModules({ formation, onFermer }) {
                 contenu: moduleModif.contenu,
                 ordre:   moduleModif.ordre,
             });
-            setModuleModif(null);
+            setModuleModif(null);    // sort du mode édition
             setMessageOk('Module modifié avec succès.');
             chargerModules();
             setTimeout(() => setMessageOk(''), 3000);
@@ -91,9 +102,11 @@ export default function ModalModules({ formation, onFermer }) {
         }
     };
 
+    // Suppression d'un module avec confirmation native du navigateur.
     const handleSupprimer = async (id) => {
+        // window.confirm : popup OK/Annuler synchrone du navigateur.
         const confirme = window.confirm('Supprimer ce module ?');
-        if (!confirme) return;
+        if (!confirme) return;       // annulation : on sort
 
         try {
             await moduleService.supprimerModule(id);

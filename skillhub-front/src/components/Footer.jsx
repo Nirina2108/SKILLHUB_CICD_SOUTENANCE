@@ -1,3 +1,5 @@
+// Link de react-router-dom : navigation côté client SANS rechargement de page
+// (préférable à <a> pour les liens internes).
 import { Link } from 'react-router-dom';
 import './Footer.css';
 
@@ -10,29 +12,35 @@ import './Footer.css';
  * L'année du copyright est calculée dynamiquement pour rester à jour automatiquement.
  */
 export default function Footer() {
+    // Année courante calculée à chaque rendu — évite d'avoir à modifier le code à chaque nouvel an.
     const annee = new Date().getFullYear();
 
+    // JSX retourné : structure en 3 zones (bandeau supérieur / contenu principal / bas).
     return (
         <footer className="footer">
 
             {/* Bandeau supérieur : branding + newsletter + bouton retour en haut. */}
             <div className="footer-bandeau">
+                {/* Bloc identité visuelle SkillHub */}
                 <div className="footer-brand">
                     <span className="footer-brand-nom">SKILLHUB</span>
                     <span className="footer-brand-tag">SKILLS FOR THE FUTURE</span>
                 </div>
 
+                {/* Bloc newsletter (placeholder visuel — bouton non fonctionnel pour l'instant) */}
                 <div className="footer-newsletter">
                     <span className="footer-news-titre">NEWSLETTER</span>
                     <span className="footer-news-sub">Inscrivez-vous pour ne rien manquer</span>
                     <button className="footer-news-btn">+ Je m'inscris</button>
                 </div>
 
+                {/* Lien ancre #top : permet de remonter en haut de la page */}
                 <a href="#top" className="footer-top">⤴</a>
             </div>
 
-            {/* Contenu principal */}
+            {/* Contenu principal du footer : 4 colonnes (adresse / nav / infos / social) */}
             <div className="footer-principal">
+                {/* Colonne 1 : adresse postale + téléphone */}
                 <div className="footer-col">
                     <h4 className="footer-col-titre">Adresse</h4>
                     <p className="footer-col-texte">
@@ -40,9 +48,11 @@ export default function Footer() {
                         Quatre Bornes, Maurice
                     </p>
                     <h4 className="footer-col-titre footer-mt">Téléphone</h4>
+                    {/* href="tel:..." ouvre l'app téléphone sur mobile */}
                     <a className="footer-lien-rouge" href="tel:+23055525559">+230 555 25 59</a>
                 </div>
 
+                {/* Colonne 2 : navigation interne avec react-router (Link) */}
                 <div className="footer-col">
                     <h4 className="footer-col-titre">Navigation</h4>
                     <Link to="/"           className="footer-lien">Accueil</Link>
@@ -51,6 +61,7 @@ export default function Footer() {
                     <Link to="/"           className="footer-lien">Contact</Link>
                 </div>
 
+                {/* Colonne 3 : liens légaux (placeholders, href="#" pour le moment) */}
                 <div className="footer-col">
                     <h4 className="footer-col-titre">Informations</h4>
                     <a href="#" className="footer-lien">Mentions légales</a>
@@ -59,8 +70,10 @@ export default function Footer() {
                     <a href="#" className="footer-lien">Gestion des cookies</a>
                 </div>
 
+                {/* Colonne 4 : réseaux sociaux + crédit équipe */}
                 <div className="footer-col footer-col-droite">
                     <div className="footer-social">
+                        {/* aria-label : nom accessible pour les lecteurs d'écran */}
                         <a href="#" className="footer-social-btn" aria-label="Facebook">f</a>
                         <a href="#" className="footer-social-btn" aria-label="Instagram">◎</a>
                         <a href="#" className="footer-social-btn" aria-label="YouTube">▶</a>
@@ -72,8 +85,9 @@ export default function Footer() {
                 </div>
             </div>
 
-            {/* Bas de page */}
+            {/* Bas de page : copyright dynamique + liens privacy/terms */}
             <div className="footer-bas">
+                {/* {annee} interpole la variable JS calculée plus haut */}
                 <p>© {annee} Skillhub | All Rights Reserved</p>
                 <div className="footer-bas-liens">
                     <a href="#">Privacy Policy</a>
