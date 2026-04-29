@@ -406,6 +406,13 @@
 }
 .df-stat-mini-label { font-size: 0.72rem; color: #7a8aaa; }
 
+.df-card-pdf {
+    margin-top: 0.6rem;
+    font-size: 0.78rem;
+}
+.df-pdf-ok { color: #4ade80; }
+.df-pdf-manquant { color: #fbbf24; }
+
 .df-card-actions {
     padding: 1rem 1.5rem;
     display: flex;

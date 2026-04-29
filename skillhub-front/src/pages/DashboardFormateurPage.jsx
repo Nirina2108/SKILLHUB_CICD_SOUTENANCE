@@ -88,6 +88,16 @@ export default function DashboardFormateurPage() {
         setTimeout(() => setMessageOk(''), 3000);
     };
 
+    const handleTelechargerPdf = async (formation) => {
+        try {
+            await formationService.telechargerPdf(formation.id, formation.titre);
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Erreur lors du téléchargement.';
+            setErreur(msg);
+            setTimeout(() => setErreur(''), 3000);
+        }
+    };
+
     const getNiveauLabel = (n) => ({
         debutant: 'Debutant',
         intermediaire: 'Intermediaire',
@@ -260,6 +270,14 @@ export default function DashboardFormateurPage() {
                                         {formation.description?.length > 90 ? '...' : ''}
                                     </p>
 
+                                    <div className="df-card-pdf">
+                                        {formation.fichier_pdf ? (
+                                            <span className="df-pdf-ok">📄 Cours PDF disponible</span>
+                                        ) : (
+                                            <span className="df-pdf-manquant">⚠ Aucun PDF uploadé</span>
+                                        )}
+                                    </div>
+
                                     <div className="df-card-stats">
                                         <div className="df-stat-mini">
                                             <span className="df-stat-mini-val">{formation.nombre_de_vues}</span>
@@ -304,6 +322,16 @@ export default function DashboardFormateurPage() {
                                         >
                                             Modules
                                         </Bouton>
+
+                                        {formation.fichier_pdf && (
+                                            <Bouton
+                                                variante="secondaire"
+                                                taille="petit"
+                                                onClick={() => handleTelechargerPdf(formation)}
+                                            >
+                                                PDF
+                                            </Bouton>
+                                        )}
                                     </div>
 
                                     <div className="df-card-actions-supprimer">
