@@ -1,7 +1,17 @@
 package com.example.auth.dto;
 
 /**
- * DTO retourné après calcul de la preuve HMAC côté client simulé.
+ * Payload retourné par POST /api/auth/client-proof (endpoint démo).
+ *
+ * Contient tous les éléments qu'un VRAI client (navigateur ou app mobile)
+ * devrait calculer localement avant d'appeler /api/auth/login :
+ *  - email      : repris de la requête
+ *  - nonce      : valeur aléatoire générée par le serveur (UUID)
+ *  - timestamp  : moment du calcul en epoch secondes
+ *  - message    : "email:nonce:timestamp" (chaîne canonique signée)
+ *  - hmac       : signature HMAC-SHA-256 du message avec le password en clé
+ *
+ * Ces 4 derniers champs sont à recopier dans LoginRequest pour s'authentifier.
  *
  * @author Poun
  * @version 3.2
