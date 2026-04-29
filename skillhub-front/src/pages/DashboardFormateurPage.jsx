@@ -28,19 +28,26 @@ import './DashboardFormateurPage.css';
 export default function DashboardFormateurPage() {
     const { utilisateur, setUtilisateur } = useAuth();
     const navigate = useNavigate();
+    // Référence sur l'input file photo caché.
     const inputPhotoRef = useRef(null);
 
+    // Liste des formations + drapeaux UI.
     const [formations, setFormations] = useState([]);
     const [chargement, setChargement] = useState(true);
+    // Ouverture des deux modals (formation et modules).
     const [modalFormationOuverte, setModalFormationOuverte] = useState(false);
     const [modalModulesOuverte, setModalModulesOuverte] = useState(false);
+    // Formation passée à ModalFormation (null = mode création, objet = mode modification).
     const [formationModif, setFormationModif] = useState(null);
+    // Formation passée à ModalModules (pour gérer ses modules).
     const [formationModules, setFormationModules] = useState(null);
     const [messageOk, setMessageOk] = useState('');
     const [erreur, setErreur] = useState('');
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    // Filtre niveau : 'tout' | 'debutant' | 'intermediaire' | 'avance'
     const [filtreActif, setFiltreActif] = useState('tout');
 
+    // Charge les formations créées par le formateur connecté.
     const chargerFormations = async () => {
         setChargement(true);
         try {
@@ -53,10 +60,12 @@ export default function DashboardFormateurPage() {
         }
     };
 
+    // 1er chargement au montage.
     useEffect(() => {
         chargerFormations();
     }, []);
 
+    // Upload photo de profil (identique au DashboardApprenantPage).
     const handlePhotoChange = async (e) => {
         const fichier = e.target.files[0];
         if (!fichier) return;
@@ -66,6 +75,7 @@ export default function DashboardFormateurPage() {
         try {
             const data = await authService.uploadPhoto(fichier);
 
+            // Synchro contexte avec le user fraîchement uploadé.
             if (data.user) {
                 setUtilisateur(data.user);
             } else {
@@ -82,27 +92,31 @@ export default function DashboardFormateurPage() {
         }
     };
 
+    // Suppression d'une formation avec confirmation native.
     const handleSupprimer = async (id) => {
         if (!window.confirm('Supprimer cette formation ?')) return;
 
         try {
             await formationService.supprimerFormation(id);
             setMessageOk('Formation supprimee.');
-            chargerFormations();
+            chargerFormations();   // re-fetch pour MAJ la liste
             setTimeout(() => setMessageOk(''), 3000);
         } catch {
             setErreur('Erreur suppression.');
         }
     };
 
+    // Callback appelé par ModalFormation après sauvegarde réussie.
+    // Affiche un message dynamique (création vs modification) puis rafraîchit la liste.
     const handleSauvegarder = () => {
         setMessageOk(formationModif ? 'Formation modifiee.' : 'Formation creee.');
         setModalFormationOuverte(false);
-        setFormationModif(null);
+        setFormationModif(null);     // reset le mode (revient en création la prochaine fois)
         chargerFormations();
         setTimeout(() => setMessageOk(''), 3000);
     };
 
+    // Téléchargement du PDF d'une formation depuis sa card.
     const handleTelechargerPdf = async (formation) => {
         try {
             await formationService.telechargerPdf(formation.id, formation.titre);
@@ -113,16 +127,21 @@ export default function DashboardFormateurPage() {
         }
     };
 
+    // Convertit le niveau en libellé. Pattern lookup dans une map avec fallback.
     const getNiveauLabel = (n) => ({
         debutant: 'Debutant',
         intermediaire: 'Intermediaire',
         avance: 'Avance'
     }[n] || n);
 
+    // Filtrage par niveau (ternaire simple : "tout" = pas de filtre).
     const formationsFiltrees = filtreActif === 'tout'
         ? formations
         : formations.filter(f => f.niveau === filtreActif);
 
+    // Stats agrégées : somme totale vues et inscrits sur l'ensemble des formations.
+    // .reduce((acc, val) => acc + ..., 0) : pattern de somme.
+    // (val.field || 0) : sécurité si la propriété est absente.
     const totalVues = formations.reduce((s, f) => s + (f.nombre_de_vues || 0), 0);
     const totalApprenants = formations.reduce((s, f) => s + (f.inscriptions_count || 0), 0);
 

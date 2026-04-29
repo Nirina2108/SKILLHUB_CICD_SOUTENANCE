@@ -19,17 +19,22 @@ import './DashboardApprenantPage.css';
  * Route : /dashboard/apprenant (protégée par RouteApprenant dans App.jsx)
  */
 export default function DashboardApprenantPage() {
+    // Récupère l'utilisateur courant + setter pour MAJ après upload photo.
     const { utilisateur, setUtilisateur } = useAuth();
     const navigate = useNavigate();
+    // Référence sur l'input file caché (déclenchée via le bouton avatar).
     const inputPhotoRef = useRef(null);
 
+    // États : liste des inscriptions + drapeaux UI + filtre actif.
     const [inscriptions, setInscriptions] = useState([]);
     const [chargement, setChargement] = useState(true);
     const [messageOk, setMessageOk] = useState('');
     const [erreur, setErreur] = useState('');
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    // filtreActif : 'tout' | 'en_cours' | 'termine' | 'pas_commence'
     const [filtreActif, setFiltreActif] = useState('tout');
 
+    // Charge les formations suivies par l'apprenant connecté.
     const chargerInscriptions = async () => {
         setChargement(true);
         try {
@@ -42,10 +47,12 @@ export default function DashboardApprenantPage() {
         }
     };
 
+    // Effect : 1er chargement au montage.
     useEffect(() => {
         chargerInscriptions();
     }, []);
 
+    // Upload de la photo de profil avec MAJ du contexte global.
     const handlePhotoChange = async (e) => {
         const fichier = e.target.files[0];
         if (!fichier) return;
@@ -55,9 +62,11 @@ export default function DashboardApprenantPage() {
         try {
             const data = await authService.uploadPhoto(fichier);
 
+            // Synchro du contexte avec le user fraîchement uploadé.
             if (data.user) {
                 setUtilisateur(data.user);
             } else {
+                // Fallback : on relit depuis localStorage (mis à jour par authService).
                 const utilisateurActuel = authService.getUtilisateur();
                 setUtilisateur(utilisateurActuel);
             }
@@ -65,42 +74,53 @@ export default function DashboardApprenantPage() {
             setMessageOk('Photo mise a jour.');
             setTimeout(() => setMessageOk(''), 3000);
         } catch {
+            // catch sans variable car on ignore l'erreur pour afficher un message générique.
             setErreur("Erreur upload photo.");
         } finally {
             setUploadingPhoto(false);
         }
     };
 
+    // Désinscription d'une formation avec confirmation native.
     const handleDesinscrire = async (formationId) => {
         if (!window.confirm('Se desinscrire de cette formation ?')) return;
 
         try {
             await inscriptionService.seDesinscrire(formationId);
             setMessageOk('Desinscription reussie.');
-            chargerInscriptions();
+            chargerInscriptions();   // re-fetch pour MAJ la liste
             setTimeout(() => setMessageOk(''), 3000);
         } catch {
             setErreur('Erreur lors de la desinscription.');
         }
     };
 
+    // Convertit un niveau en libellé (pattern lookup dans une map).
+    // (param) => ({...}[param] || param) : retourne le libellé ou le param brut en fallback.
     const getNiveauLabel = (n) => ({
         debutant: 'Debutant',
         intermediaire: 'Intermediaire',
         avance: 'Avance'
     }[n] || n);
 
-    const inscriptionsFiltrees = filtreActif === 'tout'
-        ? inscriptions
-        : filtreActif === 'en_cours'
-            ? inscriptions.filter(i => i.progression > 0 && i.progression < 100)
-            : filtreActif === 'termine'
-                ? inscriptions.filter(i => i.progression === 100)
-                : inscriptions.filter(i => i.progression === 0);
+    // Filtrage des inscriptions selon le filtre actif.
+    // Extrait en if/else en cascade pour éviter le ternaire imbriqué (Sonar S3358).
+    const filtrerInscriptions = () => {
+        if (filtreActif === 'tout') return inscriptions;
+        if (filtreActif === 'en_cours') return inscriptions.filter(i => i.progression > 0 && i.progression < 100);
+        if (filtreActif === 'termine') return inscriptions.filter(i => i.progression === 100);
+        return inscriptions.filter(i => i.progression === 0);  // 'pas_commence'
+    };
+    const inscriptionsFiltrees = filtrerInscriptions();
 
+    // Statistiques affichées dans les cards du haut.
+    // .filter().length : compte le nombre d'éléments qui matchent.
     const totalTermines = inscriptions.filter(i => i.progression === 100).length;
     const totalEnCours = inscriptions.filter(i => i.progression > 0 && i.progression < 100).length;
 
+    // Progression moyenne : somme des progressions / nombre total.
+    // Ternaire pour éviter division par zéro si pas d'inscriptions.
+    // .reduce((acc, val) => acc + val, 0) : pattern classique de somme.
     const moyenneProgression = inscriptions.length > 0
         ? Math.round(inscriptions.reduce((s, i) => s + i.progression, 0) / inscriptions.length)
         : 0;
