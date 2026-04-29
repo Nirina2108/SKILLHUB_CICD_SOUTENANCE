@@ -6,7 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 /**
- * Repository pour gerer les utilisateurs.
+ * Repository Spring Data JPA pour la table users.
+ *
+ * Étend JpaRepository qui fournit automatiquement les méthodes CRUD
+ * de base (save, findById, findAll, delete, count, ...). Les méthodes
+ * findByXxx ci-dessous suivent les conventions de nommage Spring Data
+ * qui génèrent automatiquement les requêtes SQL correspondantes
+ * (pas besoin d'écrire de @Query).
  *
  * @author Nirina
  * @version 1.0

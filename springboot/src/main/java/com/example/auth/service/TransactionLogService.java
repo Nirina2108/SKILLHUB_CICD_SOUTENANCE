@@ -9,16 +9,19 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Service de log des transactions de l application.
+ * Service de journalisation des transactions sensibles dans un fichier dédié.
  *
- * Chaque action importante est enregistree dans un fichier de log :
- * - Inscription
- * - Login
- * - Logout
- * - Changement de mot de passe
- * - Verification email
+ * Permet de garder une trace écrite (hors base SQL) de toutes les actions
+ * critiques pour la sécurité : inscriptions, connexions (succès/échecs),
+ * déconnexions, changements de mot de passe, vérifications d'email.
  *
- * Format : [DATE] [ACTION] [EMAIL] [STATUT]
+ * Cette journalisation est COMPLÉMENTAIRE des logs système Spring Boot :
+ *  - Permet un audit indépendant si la base est compromise.
+ *  - Facilite la conformité (RGPD, certifications) qui demandent un journal
+ *    des opérations sur les données personnelles.
+ *
+ * Format de chaque ligne : [DATE] [ACTION] [EMAIL] [STATUT]
+ * Exemple : [2026-04-29T14:30:22] [LOGIN] [user@example.com] [SUCCESS]
  *
  * @author Nirina
  * @version 1.0

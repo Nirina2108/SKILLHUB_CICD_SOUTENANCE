@@ -10,12 +10,19 @@ import java.security.Key;
 import java.util.Date;
 
 /**
- * Service de generation et validation des JWT.
+ * Service de génération et validation des JSON Web Tokens (JWT).
  *
- * Le JWT contient :
- * - l email de l utilisateur (subject)
- * - la date d emission
- * - la date d expiration
+ * Algorithme : HMAC-SHA256 (HS256). La clé secrète doit faire au moins 32 caractères
+ * (contrainte du standard JWT pour cet algorithme).
+ *
+ * Le JWT contient un payload minimaliste :
+ *  - subject : email de l'utilisateur (identifiant)
+ *  - issuedAt : timestamp d'émission
+ *  - expiration : timestamp d'expiration (issuedAt + jwt.expiration)
+ *
+ * Aucune information sensible n'est stockée dans le payload (pas de mot de passe,
+ * pas de rôle complet) : un JWT peut être lu par n'importe qui en clair, seule
+ * la signature garantit l'intégrité.
  *
  * @author Nirina
  * @version 1.0
@@ -24,13 +31,15 @@ import java.util.Date;
 public class JwtService {
 
     /**
-     * Cle secrete lue depuis application.properties.
+     * Clé secrète injectée depuis application.properties (variable d'env JWT_SECRET).
+     * Sert à signer ET vérifier les JWT (algorithme symétrique HS256).
      */
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
     /**
-     * Duree de validite du JWT en millisecondes.
+     * Durée de validité d'un token en millisecondes (ex : 900000 = 15 min).
+     * Au-delà, le token doit être refresh ou l'utilisateur doit se reconnecter.
      */
     @Value("${app.jwt.expiration}")
     private long jwtExpiration;

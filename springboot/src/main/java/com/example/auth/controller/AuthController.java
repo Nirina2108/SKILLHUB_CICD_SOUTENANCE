@@ -19,16 +19,24 @@ import com.example.auth.dto.ChangePasswordRequest;
 import java.util.Map;
 
 /**
- * Controller REST pour l authentification.
+ * Contrôleur REST exposant l'API d'authentification basée sur HMAC challenge-response.
+ *
+ * Le flux de connexion sécurisé suit ces étapes :
+ *  1. Le client appelle POST /client-proof avec email + password (en HTTPS)
+ *     pour obtenir une "preuve" calculée localement (utilisé en démo).
+ *  2. Le client envoie POST /login avec cette preuve, le serveur la vérifie
+ *     en recalculant le HMAC attendu, puis émet un JWT en cas de succès.
+ *  3. Le client appelle ensuite GET /me, POST /logout, PUT /change-password
+ *     en passant le JWT dans l'en-tête Authorization.
  *
  * Endpoints :
- * - POST /register
- * - GET  /verify-email
- * - POST /client-proof
- * - POST /login
- * - GET  /me
- * - POST /logout
- * - PUT  /change-password
+ *  - POST /api/auth/register        : création de compte (envoie email de vérification)
+ *  - GET  /api/auth/verify-email    : valide le token de vérification email
+ *  - POST /api/auth/client-proof    : utilitaire de calcul de preuve côté client (démo)
+ *  - POST /api/auth/login           : connexion via preuve HMAC, retourne un JWT
+ *  - GET  /api/auth/me              : infos de l'utilisateur courant (lecture du JWT)
+ *  - POST /api/auth/logout          : invalidation du JWT (blacklist)
+ *  - PUT  /api/auth/change-password : changement de mot de passe (auth requise)
  *
  * @author Nirina
  * @version 1.0
@@ -38,20 +46,22 @@ import java.util.Map;
 public class AuthController {
 
     /**
-     * Service principal d authentification.
+     * Service métier qui contient la logique d'authentification (validation
+     * de la preuve, génération JWT, gestion des sessions, ...).
      */
     private final AuthService authService;
 
     /**
-     * Service de simulation du client HMAC.
+     * Service utilitaire qui SIMULE le calcul de preuve côté client.
+     * En production réelle, ce calcul serait effectué dans le navigateur ou
+     * l'app mobile pour ne jamais transmettre le mot de passe en clair.
+     * Ici on l'expose côté serveur pour faciliter les démos et tests.
      */
     private final ClientProofService clientProofService;
 
     /**
-     * Constructeur.
-     *
-     * @param authService service auth
-     * @param clientProofService service client simule
+     * Injection par constructeur (recommandé en Spring pour faciliter les tests
+     * et garantir l'immutabilité des dépendances).
      */
     public AuthController(AuthService authService, ClientProofService clientProofService) {
         this.authService = authService;
@@ -59,10 +69,12 @@ public class AuthController {
     }
 
     /**
-     * Endpoint d inscription.
+     * Inscription d'un nouvel utilisateur.
+     * Sauvegarde le compte en base avec mot de passe haché (BCrypt) et envoie
+     * un email contenant un lien de vérification (token unique).
      *
-     * @param request donnees d inscription
-     * @return reponse simple
+     * @param request payload contenant nom, email, password
+     * @return JSON avec message de succès ou erreur de validation
      */
     @PostMapping("/register")
     public Map<String, Object> register(@RequestBody RegisterRequest request) {
@@ -70,11 +82,11 @@ public class AuthController {
     }
 
     /**
-     * Endpoint de verification email.
-     * Appele via le lien envoye par email.
+     * Validation de l'email après inscription.
+     * Endpoint appelé par le lien que l'utilisateur clique dans son email.
      *
-     * @param token token de verification
-     * @return message de succes ou erreur
+     * @param token token UUID généré à l'inscription
+     * @return JSON avec message de succès ou expiration
      */
     @GetMapping("/verify-email")
     public Map<String, Object> verifyEmail(@RequestParam String token) {
@@ -82,10 +94,12 @@ public class AuthController {
     }
 
     /**
-     * Endpoint utilitaire pour simuler le calcul cote client.
+     * Endpoint démo : calcule la preuve HMAC côté serveur à partir du
+     * couple (email, password) pour faciliter les tests Postman / curl.
+     * En production réelle, ce calcul est fait uniquement côté client.
      *
-     * @param request email + password
-     * @return preuve complete
+     * @param request payload contenant email et password
+     * @return preuve complète (nonce client, timestamp, hmac)
      */
     @PostMapping("/client-proof")
     public ClientProofResponse buildClientProof(@RequestBody ClientProofRequest request) {
@@ -93,10 +107,12 @@ public class AuthController {
     }
 
     /**
-     * Endpoint de connexion.
+     * Connexion avec preuve HMAC.
+     * Le serveur recalcule la preuve attendue à partir du mot de passe stocké
+     * (en HMAC-SHA256 avec le nonce serveur) et compare. Si égales, un JWT est émis.
      *
-     * @param request preuve de connexion HMAC
-     * @return reponse avec token ou erreur
+     * @param request payload contenant email et la preuve HMAC du client
+     * @return JSON contenant le JWT et les infos utilisateur, ou erreur 401
      */
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody LoginRequest request) {

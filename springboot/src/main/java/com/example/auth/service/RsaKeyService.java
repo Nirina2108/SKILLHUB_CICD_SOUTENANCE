@@ -11,16 +11,19 @@ import java.util.Base64;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Service de gestion des cles RSA par utilisateur.
+ * Service de génération et gestion des paires de clés RSA par utilisateur.
  *
- * Chaque utilisateur possede une paire de cles RSA :
- * - cle publique : partageable
- * - cle privee : chiffree et stockee en base
+ * À l'inscription, chaque utilisateur reçoit une paire de clés RSA-2048
+ * stockée dans son enregistrement User :
+ *  - public_key  : clé publique en Base64, partageable.
+ *  - private_key : clé privée en Base64, chiffrée par PasswordCryptoService.
  *
- * Utilisation :
- * - Alice chiffre avec la cle publique de Bob
- * - Bob dechiffre avec sa cle privee
- * - Les messages sont haches avec SHA-256
+ * Cas d'usage envisagés (pas encore implémentés dans l'app, base technique prête) :
+ *  - Chiffrement bout-en-bout des messages : Alice utilise la clé publique de Bob
+ *    pour chiffrer, Bob déchiffre avec sa clé privée.
+ *  - Signature numérique : Alice signe un document avec sa clé privée,
+ *    Bob vérifie avec la clé publique d'Alice.
+ *  - Hash SHA-256 pour les empreintes de messages avant signature.
  *
  * @author Nirina
  * @version 1.0

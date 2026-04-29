@@ -10,16 +10,25 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 /**
- * Entite representant un utilisateur.
+ * Entité JPA représentant un utilisateur du service d'authentification.
  *
- * Moustass CloudSec :
- * - mot de passe chiffre AES/GCM
- * - JWT pour l authentification
- * - email de confirmation obligatoire
- * - paire de cles RSA generee a l inscription
+ * Particularités sécurité (Moustass CloudSec) :
+ *  - Le mot de passe est CHIFFRÉ (réversible) en AES/GCM, pas haché.
+ *    Cela permet au serveur de recalculer la preuve HMAC pour valider
+ *    un challenge-response. Le password_encrypted ne sort jamais en clair
+ *    de l'application.
+ *  - Le JWT actif est stocké en base avec sa date d'expiration, ce qui
+ *    permet l'invalidation côté serveur (logout immédiat).
+ *  - L'email doit être vérifié via un lien envoyé à l'inscription pour
+ *    activer le compte (email_verified=true).
+ *  - Une paire de clés RSA est générée à l'inscription pour les futures
+ *    fonctionnalités de chiffrement bout-en-bout.
  *
  * SkillHub :
- * - role apprenant ou formateur
+ *  - Le champ role contient soit "apprenant" soit "formateur" pour les
+ *    autorisations métier.
+ *
+ * Mapping JPA : table "users" en MySQL, id auto-incrémenté.
  *
  * @author Nirina
  * @version 1.2

@@ -7,8 +7,16 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
 /**
- * Service de validation du token Bearer.
- * Centralise la logique de verification pour eviter la duplication.
+ * Service de validation des tokens Bearer côté serveur.
+ *
+ * Contrairement à JwtService qui valide la signature du JWT, TokenService
+ * vérifie un token "session" stocké en base (champ token de la table users)
+ * et son expiration (token_expires_at). Cela permet d'invalider un token
+ * côté serveur (logout, blacklist) sans attendre son expiration naturelle.
+ *
+ * Centralise la logique de validation pour éviter sa duplication dans chaque
+ * contrôleur qui doit identifier l'utilisateur courant à partir du header
+ * Authorization.
  *
  * @author Nirina
  * @version 1.0
