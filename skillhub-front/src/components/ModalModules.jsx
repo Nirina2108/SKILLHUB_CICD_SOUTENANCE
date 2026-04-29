@@ -4,10 +4,15 @@ import Bouton from './Bouton';
 import './ModalModules.css';
 
 /**
- * Modal de gestion des modules d'une formation.
- * Props :
- * - formation : objet formation
- * - onFermer  : ferme la modal
+ * Modal de gestion des modules (leçons) d'une formation.
+ *
+ * Affiche la liste des modules existants triés par ordre, et un formulaire
+ * pour en créer / modifier / supprimer. Réservé au formateur propriétaire
+ * de la formation (filtrage côté backend via le contrôleur Module).
+ *
+ * @param {object} props
+ * @param {object} props.formation Formation parente dont on gère les modules
+ * @param {function} props.onFermer Ferme la modal
  */
 export default function ModalModules({ formation, onFermer }) {
     const [modules,      setModules]      = useState([]);

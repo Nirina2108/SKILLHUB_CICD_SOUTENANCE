@@ -9,6 +9,18 @@ import Footer from '../components/Footer';
 import Bouton from '../components/Bouton';
 import './ApprendrePage.css';
 
+/*
+ * Page d'apprentissage : où l'apprenant inscrit consomme la formation.
+ *
+ * Layout : sidebar gauche avec la liste des modules (numéro et titre, coche
+ * si terminé), zone centrale avec le contenu du module sélectionné, barre
+ * de progression en haut. Boutons "Lire le PDF" et "Télécharger" si la
+ * formation a un PDF de cours uploadé par le formateur.
+ *
+ * Sécurité : si l'apprenant n'est pas inscrit, on redirige vers son dashboard.
+ *
+ * Route : /apprendre/:id (réservée aux apprenants inscrits à cette formation)
+ */
 export default function ApprendrePage() {
     const { id }   = useParams();
     const navigate = useNavigate();
@@ -66,6 +78,26 @@ export default function ApprendrePage() {
     useEffect(() => {
         charger();
     }, [id]);
+
+    const handleVoirPdf = async () => {
+        try {
+            await formationService.ouvrirPdf(formation.id);
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Erreur lors de l\'ouverture du PDF.';
+            setErreur(msg);
+            setTimeout(() => setErreur(''), 3000);
+        }
+    };
+
+    const handleTelechargerPdf = async () => {
+        try {
+            await formationService.telechargerPdf(formation.id, formation.titre);
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Erreur lors du téléchargement.';
+            setErreur(msg);
+            setTimeout(() => setErreur(''), 3000);
+        }
+    };
 
     const handleTerminer = async (moduleId) => {
         if (modulesTermines.includes(moduleId)) return;
@@ -130,6 +162,17 @@ export default function ApprendrePage() {
                         </button>
                         <h1 className="apprendre-titre">{formation?.titre}</h1>
                         <p className="apprendre-description">{formation?.description}</p>
+
+                        {formation?.fichier_pdf && (
+                            <div className="apprendre-pdf-actions">
+                                <Bouton variante="principal" taille="petit" onClick={handleVoirPdf}>
+                                    📖 Lire le cours PDF
+                                </Bouton>
+                                <Bouton variante="secondaire" taille="petit" onClick={handleTelechargerPdf}>
+                                    ⬇ Télécharger
+                                </Bouton>
+                            </div>
+                        )}
                     </div>
 
                     {/* Progression globale */}

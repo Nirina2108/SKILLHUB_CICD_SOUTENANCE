@@ -1,20 +1,30 @@
 import { createContext, useContext, useState } from "react";
 import authService from "../services/authService";
 
-/**
- * Contexte d'authentification global.
+/*
+ * Contexte React global pour la session utilisateur.
+ *
+ * Fournit l'utilisateur courant, ses helpers de rôle, et les méthodes
+ * login/register/logout utilisées partout dans l'app sans avoir à passer
+ * les props manuellement de composant en composant (évite le "prop drilling").
+ *
+ * L'état est synchronisé avec localStorage via authService :
+ *  - Au démarrage, on lit la session depuis localStorage si un token existe.
+ *  - Après login/register, on met à jour localStorage ET l'état React.
+ *  - Au logout, on purge les deux.
  */
+
 const AuthContext = createContext(null);
 
 /**
- * Provider d'authentification.
- *
- * @param {object} props props React
- * @returns {JSX.Element}
+ * Provider à monter en racine de l'application (autour de <Routes>).
+ * Tous les composants enfants peuvent accéder au contexte via useAuth().
  */
 export function AuthProvider({ children }) {
+    // État initial : on tente de restaurer la session depuis localStorage.
+    // Si le token est absent mais l'utilisateur présent (état incohérent),
+    // on purge l'utilisateur pour repartir d'une session propre.
     const [utilisateur, setUtilisateur] = useState(() => {
-        // Si le token est absent, on ne charge pas l'utilisateur (état incohérent)
         const token = localStorage.getItem('token');
         if (!token) {
             localStorage.removeItem('utilisateur');
@@ -24,11 +34,8 @@ export function AuthProvider({ children }) {
     });
 
     /**
-     * Connexion utilisateur.
-     *
-     * @param {string} email email
-     * @param {string} password mot de passe
-     * @returns {Promise<object>}
+     * Connecte l'utilisateur via email + mot de passe.
+     * Met à jour l'état React puis renvoie la réponse complète.
      */
     const login = async (email, password) => {
         const data = await authService.login(email, password);
@@ -37,13 +44,8 @@ export function AuthProvider({ children }) {
     };
 
     /**
-     * Inscription utilisateur.
-     *
-     * @param {string} nom nom
-     * @param {string} email email
-     * @param {string} password mot de passe
-     * @param {string} role role
-     * @returns {Promise<object>}
+     * Inscrit un nouvel utilisateur. Le backend renvoie un token JWT
+     * que authService stocke automatiquement, on synchronise juste l'état React.
      */
     const register = async (nom, email, password, passwordConfirmation, role) => {
         const data = await authService.register(nom, email, password, passwordConfirmation, role);
@@ -52,9 +54,7 @@ export function AuthProvider({ children }) {
     };
 
     /**
-     * Déconnexion.
-     *
-     * @returns {Promise<void>}
+     * Déconnecte l'utilisateur (côté serveur ET côté client).
      */
     const logout = async () => {
         await authService.logout();
@@ -62,28 +62,19 @@ export function AuthProvider({ children }) {
     };
 
     /**
-     * Vérifie si un utilisateur est connecté.
-     *
-     * @returns {boolean}
+     * Helpers de vérification de rôle. Évitent la répétition de
+     * `utilisateur?.role === "..."` un peu partout dans l'app.
      */
     const estConnecte = () => utilisateur !== null;
 
-    /**
-     * Vérifie si l'utilisateur est formateur.
-     *
-     * @returns {boolean}
-     */
     const estFormateur = () =>
         utilisateur !== null && utilisateur.role === "formateur";
 
-    /**
-     * Vérifie si l'utilisateur est apprenant.
-     *
-     * @returns {boolean}
-     */
     const estApprenant = () =>
         utilisateur !== null && utilisateur.role === "apprenant";
 
+    // Objet exposé par le contexte. setUtilisateur est exposé pour permettre
+    // une mise à jour locale après uploadPhoto (sans repasser par login).
     const valeur = {
         utilisateur,
         setUtilisateur,
@@ -103,9 +94,8 @@ export function AuthProvider({ children }) {
 }
 
 /**
- * Hook pour utiliser le contexte auth.
- *
- * @returns {object}
+ * Hook utilitaire pour consommer le contexte d'authentification depuis n'importe
+ * quel composant enfant du provider. Exemple : const { utilisateur, logout } = useAuth();
  */
 export function useAuth() {
     return useContext(AuthContext);

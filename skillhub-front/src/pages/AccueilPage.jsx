@@ -7,6 +7,16 @@ import Footer from '../components/Footer';
 import ModalAuth from '../components/ModalAuth';
 import './AccueilPage.css';
 
+/*
+ * Page d'accueil publique de SkillHub.
+ *
+ * Présente l'application aux visiteurs anonymes et connectés :
+ *  - Hero section avec accroche et call-to-action (inscription / catalogue).
+ *  - Sélection de formations vedettes pour donner envie de s'inscrire.
+ *  - Sections marketing (avantages, témoignages, etc.).
+ *
+ * Route : / (publique, accessible à tous)
+ */
 export default function AccueilPage() {
     const { estConnecte } = useAuth();
     const navigate = useNavigate();

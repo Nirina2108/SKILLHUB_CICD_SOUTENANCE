@@ -37,17 +37,29 @@ describe("formationService", () => {
         expect(apiMock.get).toHaveBeenCalledWith("/formations/2");
     });
 
-    it("creerFormation poste les donnees", async () => {
+    it("creerFormation poste les donnees en FormData", async () => {
         apiMock.post.mockResolvedValue({ data: { ok: true } });
-        const payload = { titre: "React" };
-        await formationService.creerFormation(payload);
-        expect(apiMock.post).toHaveBeenCalledWith("/formations", payload);
+        await formationService.creerFormation({ titre: "React" });
+
+        expect(apiMock.post).toHaveBeenCalledTimes(1);
+        const [url, formData, config] = apiMock.post.mock.calls[0];
+        expect(url).toBe("/formations");
+        expect(formData).toBeInstanceOf(FormData);
+        expect(formData.get("titre")).toBe("React");
+        expect(config).toEqual({ headers: { "Content-Type": undefined } });
     });
 
-    it("modifierFormation envoie un put", async () => {
-        apiMock.put.mockResolvedValue({ data: { ok: true } });
+    it("modifierFormation envoie un POST avec _method=PUT", async () => {
+        apiMock.post.mockResolvedValue({ data: { ok: true } });
         await formationService.modifierFormation(3, { titre: "JS" });
-        expect(apiMock.put).toHaveBeenCalledWith("/formations/3", { titre: "JS" });
+
+        expect(apiMock.post).toHaveBeenCalledTimes(1);
+        const [url, formData, config] = apiMock.post.mock.calls[0];
+        expect(url).toBe("/formations/3");
+        expect(formData).toBeInstanceOf(FormData);
+        expect(formData.get("titre")).toBe("JS");
+        expect(formData.get("_method")).toBe("PUT");
+        expect(config).toEqual({ headers: { "Content-Type": undefined } });
     });
 
     it("supprimerFormation envoie un delete", async () => {

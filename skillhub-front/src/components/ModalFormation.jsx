@@ -4,24 +4,67 @@ import Bouton from './Bouton';
 import './ModalFormation.css';
 
 /**
- * Modal de création et modification d'une formation.
- * Props :
- * - formation    : objet formation à modifier (null si création)
- * - onFermer     : ferme la modal
- * - onSauvegarder: appelé après succès
+ * Modal de création et modification d'une formation par le formateur.
+ *
+ * Le composant fonctionne en double mode (création vs modification) selon
+ * la prop "formation" :
+ *  - formation === null : mode création, formulaire vierge.
+ *  - formation === objet : mode modification, formulaire pré-rempli avec les valeurs existantes.
+ *
+ * Champs gérés : titre, description, catégorie, niveau, et fichier PDF
+ * (optionnel — si on est en modification et qu'un PDF existe, l'utilisateur
+ * peut laisser le champ vide pour conserver le fichier actuel).
+ *
+ * @param {object} props
+ * @param {object|null} props.formation Formation à modifier, ou null pour créer
+ * @param {function} props.onFermer Ferme la modal sans rien sauvegarder
+ * @param {function} props.onSauvegarder Callback après sauvegarde réussie (rafraîchit la liste parent)
  */
 export default function ModalFormation({ formation, onFermer, onSauvegarder }) {
+    // Distinction création vs modification pour adapter le label des boutons et les valeurs initiales.
     const estModification = formation !== null;
 
+    // États contrôlés des champs du formulaire. Pré-remplis depuis "formation" si en modification.
     const [titre,       setTitre]       = useState(formation?.titre       || '');
     const [description, setDescription] = useState(formation?.description || '');
     const [categorie,   setCategorie]   = useState(formation?.categorie   || 'developpement_web');
     const [niveau,      setNiveau]      = useState(formation?.niveau      || 'debutant');
+    // fichierPdf : objet File du nouveau PDF à uploader, null si l'utilisateur n'a rien sélectionné.
+    const [fichierPdf,  setFichierPdf]  = useState(null);
     const [erreur,      setErreur]      = useState('');
     const [chargement,  setChargement]  = useState(false);
 
+    // Drapeau utilisé pour afficher un indicateur "PDF actuel — laisser vide pour conserver".
+    const aDejaUnPdf = Boolean(formation?.fichier_pdf);
+
+    // Ferme la modal au clic sur l'overlay (pas sur le contenu interne).
     const handleOverlayClick = (e) => {
         if (e.target === e.currentTarget) onFermer();
+    };
+
+    /**
+     * Validation côté client du fichier PDF avant envoi :
+     *  - Type MIME application/pdf.
+     *  - Taille max 10 MB (pour éviter une requête inutile au serveur).
+     */
+    const handleFichierChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+            setFichierPdf(null);
+            return;
+        }
+        if (file.type !== 'application/pdf') {
+            setErreur('Le fichier doit être un PDF.');
+            e.target.value = '';
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            setErreur('Le fichier dépasse 10 MB.');
+            e.target.value = '';
+            return;
+        }
+        setErreur('');
+        setFichierPdf(file);
     };
 
     const handleSubmit = async (e) => {
@@ -30,6 +73,9 @@ export default function ModalFormation({ formation, onFermer, onSauvegarder }) {
         setChargement(true);
 
         const data = { titre, description, categorie, niveau };
+        if (fichierPdf) {
+            data.fichier_pdf = fichierPdf;
+        }
 
         try {
             if (estModification) {
@@ -104,6 +150,21 @@ export default function ModalFormation({ formation, onFermer, onSauvegarder }) {
                         <option value="intermediaire">Intermédiaire</option>
                         <option value="avance">Avancé</option>
                     </select>
+
+                    <label className="mf-label">
+                        Fichier PDF du cours {aDejaUnPdf && <span className="mf-badge">PDF actuel — laisser vide pour conserver</span>}
+                    </label>
+                    <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleFichierChange}
+                        className="mf-input"
+                    />
+                    {fichierPdf && (
+                        <p className="mf-fichier-info">
+                            📄 {fichierPdf.name} ({(fichierPdf.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                    )}
 
                     <div className="mf-actions">
                         <Bouton

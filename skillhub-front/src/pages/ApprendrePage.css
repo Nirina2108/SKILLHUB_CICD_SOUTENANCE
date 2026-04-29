@@ -62,6 +62,14 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
+/* Actions PDF (lire / télécharger) */
+.apprendre-pdf-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
 /* Progression */
 .apprendre-progression-bloc {
     display: flex;

@@ -6,22 +6,38 @@ import ModalAuth from './ModalAuth';
 import MessagerieModal from './MessagerieModal';
 import './Navbar.css';
 
+/*
+ * Barre de navigation principale, présente sur quasiment toutes les pages.
+ *
+ * Elle gère :
+ *  - Les liens de navigation (accueil, formations, à propos, contact).
+ *  - L'état de connexion : bouton "Se connecter" si déconnecté, sinon
+ *    icône messagerie + avatar + bouton déconnexion.
+ *  - Un badge de messages non lus actualisé toutes les 5 secondes (polling).
+ *  - Un menu burger responsive pour mobile.
+ *  - L'ouverture des modals d'authentification et de messagerie.
+ */
 export default function Navbar() {
     const { utilisateur, logout, estConnecte } = useAuth();
     const navigate = useNavigate();
 
+    // États UI locaux : ouverture des modals + menu burger.
     const [modalOuverte, setModalOuverte] = useState(false);
     const [menuOuvert, setMenuOuvert] = useState(false);
     const [messagerieOuverte, setMessagerieOuverte] = useState(false);
+    // Compteur de messages non lus pour le badge sur l'icône messagerie.
     const [nonLus, setNonLus] = useState(0);
 
+    // Référence sur l'interval de polling pour pouvoir le clear au unmount.
     const intervalRef = useRef(null);
 
-    /**
-     * Retourne le nom affichable selon ce que renvoie le backend.
-     */
+    // Le backend renvoie "nom", certains anciens composants utilisent "name" ; on supporte les deux.
     const nomUtilisateur = utilisateur?.nom || utilisateur?.name || '';
 
+    /*
+     * Effect : démarre le polling des messages non lus quand l'utilisateur est connecté.
+     * Cleanup : stoppe l'interval au unmount ou quand l'utilisateur se déconnecte.
+     */
     useEffect(() => {
         if (!utilisateur) {
             setNonLus(0);
@@ -59,6 +75,9 @@ export default function Navbar() {
         };
     }, [utilisateur]);
 
+    /**
+     * Déconnexion : purge la session, ferme le menu, redirige vers l'accueil.
+     */
     const handleLogout = async () => {
         await logout();
         setMenuOuvert(false);
@@ -66,10 +85,16 @@ export default function Navbar() {
         navigate('/');
     };
 
+    /**
+     * Ferme le menu burger (utilisé après chaque clic sur un lien en mobile).
+     */
     const fermerMenu = () => {
         setMenuOuvert(false);
     };
 
+    /**
+     * Redirige vers le bon dashboard selon le rôle de l'utilisateur.
+     */
     const allerAuDashboard = () => {
         fermerMenu();
 
@@ -80,6 +105,10 @@ export default function Navbar() {
         );
     };
 
+    /**
+     * Ouvre la modal de messagerie. On reset le badge à 0 dès l'ouverture
+     * pour un retour visuel immédiat (le polling le remettra à jour si besoin).
+     */
     const ouvrirMessagerie = () => {
         setMessagerieOuverte(true);
         setNonLus(0);

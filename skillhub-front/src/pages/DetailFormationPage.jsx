@@ -10,6 +10,16 @@ import Bouton from '../components/Bouton';
 import ModalAuth from '../components/ModalAuth';
 import './DetailFormationPage.css';
 
+/*
+ * Page de détail d'une formation, accessible publiquement.
+ *
+ * Affiche les informations complètes de la formation, son formateur, la
+ * liste des modules (titre seul, contenu masqué pour les non-inscrits),
+ * un bouton d'inscription pour les apprenants, ou "Continuer" pour les
+ * apprenants déjà inscrits (renvoie vers ApprendrePage).
+ *
+ * Route : /formation/:id (publique, l'inscription requiert une session apprenant)
+ */
 export default function DetailFormationPage() {
     const { id }     = useParams();
     const navigate   = useNavigate();
